@@ -45,47 +45,8 @@ class InspectionHomePixelPerfect extends StatelessWidget {
     end: Alignment.centerRight,
   );
 
-  void _toast(BuildContext ctx, String msg) =>
-    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(msg)));
 
-Future<void> _openTwoWheelerScanner(BuildContext context) async {
-  // Navigate to your camera/reticle screen to capture FRONT + BACK
-  final result = await Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => const ScannerFrontTireScreen()),
-  );
 
-  // User backed out
-  if (result == null) return;
-
-  // Grab anything you need from auth state (token, userId, selected vehicleId)
-  final authState = context.read<AuthBloc>().state;
-   final box   = GetStorage();  
-      final token = (box.read<String>('auth_token') ?? '').trim();//final token     = authState.loginResponse?.token ?? '';      // adjust field names
-  // final userId    = '';
-  // final vehicleId = 'YOUR_SELECTED_BIKE_ID';                   // supply from your UI/selection
-
-  if (token.isEmpty ) {
-    _toast(context, 'Please login again.');
-    return;
-  }
-
-  // Fire the upload event (this triggers the “generating” flow)
-  context.read<AuthBloc>().add(UploadTwoWheelerRequested(
-        userId:    context.read<AuthBloc>().state.profile!.userId.toString(),
-        vehicleId: '993163bd-01a1-4c3b-9f18-4df2370ed954',
-        token:     token,
-        frontPath: result.frontPath,
-        backPath:  result.backPath,
-        vehicleType: 'bike',
-        vin: result.vin, // optional
-  ));
-
-  // Optionally show a “Generating Report” screen while Bloc uploads/parses
-  // Navigator.push(context,
-  //   MaterialPageRoute(builder: (_) => const GeneratingReportScreen()),
-  // );
-}
 
 
   @override
@@ -108,14 +69,14 @@ Future<void> _openTwoWheelerScanner(BuildContext context) async {
                   _Header(s: s),
                   SizedBox(height: 16 * s),
                   _SearchBar(s: s),
-                  SizedBox(height: 25 * s),
-                  _CarCard(s: s),
-                  SizedBox(height: 30 * s),
-                  InkWell(
-                    onTap: (){
-                     _openTwoWheelerScanner(context);
-                    },
-                    child: _BikeCard(s: s)),
+                  // SizedBox(height: 25 * s),
+                  // _CarCard(s: s),
+                  // SizedBox(height: 30 * s),
+                  // InkWell(
+                  //   onTap: (){
+                
+                  //   },
+                  //   child: _BikeCard(s: s)),
                 ],
               ),
             ),

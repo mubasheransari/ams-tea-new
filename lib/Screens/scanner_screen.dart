@@ -140,8 +140,7 @@ class _ScannerFrontTireScreenState extends State<ScannerFrontTireScreen> with Wi
             ),
           ),
 
-          // overlay
-          const ScanOverlay(),
+
 
           // captured badges
           Positioned(
