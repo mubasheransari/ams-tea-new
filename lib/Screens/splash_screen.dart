@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:new_amst_flutter/Screens/app_shell.dart';
+import 'package:new_amst_flutter/Screens/auth_screen.dart';
 import 'package:new_amst_flutter/Widgets/watermarked_widget.dart';
            
 
@@ -20,8 +23,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-
- /*   WidgetsBinding.instance.addPostFrameCallback((_) async {
+   WidgetsBinding.instance.addPostFrameCallback((_) async {
       await Future.delayed(const Duration(milliseconds: 1200));
       if (!mounted) return;
 
@@ -36,7 +38,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         ),
         (route) => false,
       );
-    });*/
+    });
   }
 
 
