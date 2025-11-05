@@ -27,8 +27,7 @@ const kCardCarGrad = LinearGradient(
   end: Alignment.bottomRight,
 );
 
-/// Pixel-perfect screen; base width 393 for scaling.
-/// Replace avatar/wheel images with your assets for a 1:1 look.
+
 class InspectionHomePixelPerfect extends StatelessWidget {
   const InspectionHomePixelPerfect({super.key});
 
