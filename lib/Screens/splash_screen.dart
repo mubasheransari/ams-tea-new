@@ -1,19 +1,6 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:new_amst_flutter/Screens/app_shell.dart';
-import 'package:new_amst_flutter/Screens/home_screen.dart';
-
-// Replace these with your actual screens:
-import 'auth_screen.dart';                  // <- your auth/login screen
-
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:get_storage/get_storage.dart';
-
-// TODO: replace with your actual screens
-import 'auth_screen.dart';
-
+import 'package:new_amst_flutter/Widgets/watermarked_widget.dart';
+           
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -28,15 +15,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     duration: const Duration(milliseconds: 600),
   )..forward();
 
-  static const _upperPath  = 'assets/splash_upper_view.png';
-  static const _bottomPath = 'assets/splash_bottom_view.png';
-  static const _logoPath   = 'assets/tiretest_logo.png';
+  static const _logoPath   = 'assets/ams_logo_underline.png';
 
   @override
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
+ /*   WidgetsBinding.instance.addPostFrameCallback((_) async {
       await Future.delayed(const Duration(milliseconds: 1200));
       if (!mounted) return;
 
@@ -51,29 +36,31 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         ),
         (route) => false,
       );
-    });
+    });*/
   }
 
-  // @override
-  // void dispose() {
-  //   _fadeCtrl.dispose();
-  //   super.dispose();
-  // }
 
   @override
   Widget build(BuildContext context) {
-    // Full-bleed canvas; no SafeArea cropping to keep exact look
     return Scaffold(
-    
       body: Stack(
-        fit: StackFit.expand,
+    //   fit: StackFit.expand,
         children: [
-          // UPPER BACKGROUND (full bleed)
-          const _UpperBackground(imagePath: _upperPath),
-      
-          // CENTER LOGO (fixed width relative to screen; tweak if needed)
-          Align(
-            alignment: const Alignment(0, -0.05), // slight optical lift
+               WatermarkTiledSmall(tileScale: 25.0),
+
+               Positioned(
+                 top: 350,
+                left: 58,
+                 child: Image.asset(
+                    _logoPath,
+                    width:320,
+                    height: 160,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                  ),
+               ),
+      /*    Align(
+            alignment: Alignment.center,
             child: LayoutBuilder(
               builder: (context, c) {
                 final w = MediaQuery.of(context).size.width;
@@ -87,45 +74,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               },
             ),
           ),
-      
-          // BOTTOM DECOR (stick to bottom, match width, keep aspect)
-          const _BottomDecor(imagePath: _bottomPath),
+          */
+
         ],
       ),
-      backgroundColor: Colors.white, // exact white canvas under images
+      backgroundColor: Colors.white, 
     );
   }
 }
 
-class _UpperBackground extends StatelessWidget {
-  const _UpperBackground({required this.imagePath});
-  final String imagePath;
-
-  @override
-  Widget build(BuildContext context) {
-    return Image.asset(
-      imagePath,
-      fit: BoxFit.cover,               // fill entire screen like your design
-      filterQuality: FilterQuality.high,
-    );
-  }
-}
-
-class _BottomDecor extends StatelessWidget {
-  const _BottomDecor({required this.imagePath});
-  final String imagePath;
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      left: 0, right: 0, bottom: 0,
-      child: Image.asset(
-        imagePath,
-        fit: BoxFit.fitWidth,          // match device width, keep aspect ratio
-        width: MediaQuery.of(context).size.width,
-        filterQuality: FilterQuality.high,
-      ),
-    );
-  }
-}
 

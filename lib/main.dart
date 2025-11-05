@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
       // Named routes used by the bottom bar:
       onGenerateRoute: AppRoutes.onGenerateRoute,
       // AuthGate decides which first screen to render:
-      home: const AuthGate(),
+      home: const  SplashScreen()//AuthGate(),
     );
   }
 }
@@ -70,6 +70,7 @@ class AuthGate extends StatelessWidget {
             // Optional: box.remove('auth_token');
             return const SplashScreen();
           case ProfileStatus.initial:
+               return const SplashScreen();
           case ProfileStatus.loading:
           default:
             return const SplashScreen();
