@@ -223,8 +223,8 @@ class _AuthScreenState extends State<AuthScreen> {
                                       ],
                                     ),
                                     SizedBox(
-                                      width: 170,
-                                      height: 50,
+                                      width: 160,
+                                      height: 40,
                                       child: _PrimaryGradientButton(
                                         text: loginLoading
                                             ? 'Please wait...'

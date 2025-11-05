@@ -158,7 +158,7 @@ class _Header extends StatelessWidget {
                   alignment: PlaceholderAlignment.baseline,
                   baseline: TextBaseline.alphabetic,
                   child: _GradientText(
-                  "${context.read<AuthBloc>().state.profile!.firstName.toString() + context.read<AuthBloc>().state.profile!.lastName.toString()}", // 'William David',
+                  "Test User", 
                     gradient: const LinearGradient(
                       colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
                       begin: Alignment.centerLeft,

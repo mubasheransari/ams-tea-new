@@ -12,7 +12,7 @@ class WatermarkTiledSmall extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             image: DecorationImage(
-              image: const AssetImage('assets/logo_ams.png'),
+              image: const AssetImage('assets/ams_logo_underline.png'),
               repeat: ImageRepeat.repeat, // tile infinitely
               fit: BoxFit.none, // no scaling by fit
               // Make watermark subtle & dark-ish
