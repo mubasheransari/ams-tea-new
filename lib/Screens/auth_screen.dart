@@ -130,7 +130,7 @@ class _AuthScreenState extends State<AuthScreen> {
           body: Stack(
             children: [
               Positioned(
-                top: 20,
+                top:   20,
                 left: MediaQuery.of(context).size.width * 0.245,
                 child: Center(
                   child: Image.asset(
@@ -141,7 +141,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
               ),
               WatermarkTiledSmall(tileScale: 25.0),
-              SafeArea(
+          SafeArea(
                 child: Center(
                   child: Padding(
                     padding: EdgeInsets.symmetric(
@@ -175,7 +175,8 @@ class _AuthScreenState extends State<AuthScreen> {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  _AuthToggle(
+                                //      tab == 1? SizedBox(height: 50,):SizedBox(),
+                              _AuthToggle(
                                     activeIndex: tab,
                                     onChanged: (i) => setState(() => tab = i),
                                   ),
@@ -246,6 +247,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                     ),
                                   ] else ...[
                                     // ---------- SIGNUP ----------
+                            
                                     _InputCard(
                                       hint: 'Name',
                                       icon: 'assets/name_icon.png',
