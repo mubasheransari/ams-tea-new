@@ -70,12 +70,12 @@ class InspectionHomePixelPerfect extends StatelessWidget {
                   _SearchBar(s: s),
                   SizedBox(height: 25 * s),
                   _CarCard(s: s),
-                  // SizedBox(height: 30 * s),
-                  // InkWell(
-                  //   onTap: (){
+                  SizedBox(height: 30 * s),
+                  InkWell(
+                    onTap: (){
                 
-                  //   },
-                  //   child: _BikeCard(s: s)),
+                    },
+                    child: _BikeCard(s: s)),
                 ],
               ),
             ),
@@ -227,8 +227,10 @@ class _CarCard extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-            right: -25 * s,
-            top: -10 * s,
+              right: -29 * s,
+            top: 18 * s,
+            // right: -25 * s,
+            // top: -10 * s,
             child: SizedBox(
               width: 205 * s,
               height: 210 * s,
@@ -292,7 +294,7 @@ class _BikeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-           height: 245 * s,
+         height: 219 * s,
       width: MediaQuery.of(context).size.width*0.90,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -309,13 +311,13 @@ class _BikeCard extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-          right: 18 * s,
-            top: -10 * s,
+          right: -29 * s,
+            top: 18 * s,
             child: SizedBox(
-              width: 225 * s,
-              height: 240 * s,
+                     width: 205 * s,
+              height: 210 * s,
               child: Image.asset(
-                'assets/bike_wheel.png',
+                'assets/new_sales-removebg-preview.png',
                 fit: BoxFit.contain,
       
               ),
@@ -327,7 +329,7 @@ class _BikeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _GradientText(
-                  'Bike Wheel\nInspection',
+                  'Daily\nSales',
                   gradient: const LinearGradient(
                     colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
                     begin: Alignment.centerLeft,
@@ -343,7 +345,7 @@ class _BikeCard extends StatelessWidget {
                 ),
                 SizedBox(height: 6 * s),
                 Text(
-                  'Analyze your motorcycle\ntires and get a report',
+                  'Enter daily sales\n& track your sales.',
                   style: TextStyle(
                     fontFamily: 'ClashGrotesk',
                     color: Color(0xFF444B59),
@@ -356,7 +358,7 @@ class _BikeCard extends StatelessWidget {
                 _ChipButtonGradient(
                   s: s,
 
-                  label: 'Scan Bike Tries', // matches the mock text
+                  label: 'Enter your Sales', // matches the mock text
                 ),
               ],
             ),
@@ -393,7 +395,7 @@ class _ChipButtonWhite extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-        Image.asset(icon,height: 22 * s,width: 22 * s), // Icon(icon, color: Color(0xFF1F2937), size: 18 * s),
+        Image.asset(icon,height: 22 * s,width: 22 * s), 
           SizedBox(width: 8 * s),
           Text(
             label,
@@ -436,7 +438,7 @@ class _ChipButtonGradient extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-                  Image.asset('assets/scan_icon.png',height: 22 * s,width: 22 * s,color: Colors.white,),
+                  Image.asset('assets/sales_button_icon.png',height: 22 * s,width: 22 * s),
         //  Icon(icon, color: Colors.white, size: 18 * s),
           SizedBox(width: 8 * s),
           Text(

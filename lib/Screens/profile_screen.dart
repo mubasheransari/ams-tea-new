@@ -126,7 +126,7 @@ class ProfilePage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                                    "${context.read<AuthBloc>().state.profile!.firstName.toString() + context.read<AuthBloc>().state.profile!.lastName.toString()}",//'William David',
+                                "Test User",   // "${context.read<AuthBloc>().state.profile!.firstName.toString() + context.read<AuthBloc>().state.profile!.lastName.toString()}",//'William David',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -138,7 +138,7 @@ class ProfilePage extends StatelessWidget {
                       ),
                       SizedBox(height: 4 * s),
                       Text(
-                        '@${context.read<AuthBloc>().state.profile!.email.toString()}',
+                        'testuser@yopmail.com',
                         style: TextStyle(
                           fontFamily: 'ClashGrotesk',
                           fontSize: 14 * s,
@@ -186,12 +186,12 @@ class ProfilePage extends StatelessWidget {
             _dividerLine(s),
 
             // ===== Menu rows (exact labels as in design)
-            _menuRow(
-              s: s,
-              icon: Icons.engineering_outlined,
-              label: 'Sponsored vendors',
-            ),
-            _dividerLine(s),
+            // _menuRow(
+            //   s: s,
+            //   icon: Icons.engineering_outlined,
+            //   label: 'Sponsored vendors',
+            // ),
+           // _dividerLine(s),
             _menuRow(
               s: s,
               icon: Icons.receipt_long_outlined,
@@ -203,12 +203,12 @@ class ProfilePage extends StatelessWidget {
               icon: Icons.add_location_alt_outlined,
               label: 'Location',
             ),
-            _dividerLine(s),
-            _menuRow(
-              s: s,
-              icon: Icons.inventory_2_outlined,
-              label: 'Clear cashe', // keep spelling to match screenshot
-            ),
+            // _dividerLine(s),
+            // _menuRow(
+            //   s: s,
+            //   icon: Icons.inventory_2_outlined,
+            //   label: 'Clear cashe', // keep spelling to match screenshot
+            // ),
             _dividerLine(s),
 
             // Logout row with gradient left icon
