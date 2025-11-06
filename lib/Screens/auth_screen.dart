@@ -236,8 +236,8 @@ class _AuthScreenState extends State<AuthScreen> {
                                         loading: loginLoading,
                                       ),
                                     ),
-                                    const SizedBox(height: 18),
-                                    CenterLabelDivider(label: 'Or login with'),
+                                 //   const SizedBox(height: 18),
+                                 //   CenterLabelDivider(label: 'Or login with'),
 
                                     const SizedBox(height: 18),
                                     _FooterSwitch(
@@ -301,10 +301,10 @@ class _AuthScreenState extends State<AuthScreen> {
                                       loading: signupLoading,
                                     ),
                                     const SizedBox(height: 18),
-                                    CenterLabelDivider(label: 'Or login with'),
-                                    const SizedBox(height: 14),
+                                    // CenterLabelDivider(label: 'Or login with'),
+                                    // const SizedBox(height: 14),
 
-                                    const SizedBox(height: 18),
+                               //     const SizedBox(height: 18),
                                     _FooterSwitch(
                                       prompt: "Already have an account? ",
                                       action: "Login",
