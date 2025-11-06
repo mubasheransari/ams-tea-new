@@ -68,8 +68,8 @@ class InspectionHomePixelPerfect extends StatelessWidget {
                   _Header(s: s),
                   SizedBox(height: 16 * s),
                   _SearchBar(s: s),
-                  // SizedBox(height: 25 * s),
-                  // _CarCard(s: s),
+                  SizedBox(height: 25 * s),
+                  _CarCard(s: s),
                   // SizedBox(height: 30 * s),
                   // InkWell(
                   //   onTap: (){
@@ -230,10 +230,10 @@ class _CarCard extends StatelessWidget {
             right: -25 * s,
             top: -10 * s,
             child: SizedBox(
-              width: 225 * s,
-              height: 230 * s,
+              width: 205 * s,
+              height: 210 * s,
               child: Image.asset(
-                'assets/car_tyres.png',
+                'assets/new_attendance_icon-removebg-preview.png',
                 fit: BoxFit.contain,
               ),
             ),
@@ -244,7 +244,7 @@ class _CarCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Car Wheel\nInspection',
+                  'Mark\nAttendance',
                   style: TextStyle(
                     fontFamily: 'ClashGrotesk',
                     color: Colors.white,
@@ -255,7 +255,7 @@ class _CarCard extends StatelessWidget {
                 ),
                 SizedBox(height: 6 * s),
                 Text(
-                  'Scan your car wheels\nto detect wear & damage',
+                 'Make sure GPS is on and\nyou’re at the job site.',
                   style: TextStyle(
                     fontFamily: 'ClashGrotesk',
                     color: Colors.white.withOpacity(0.95),
@@ -267,15 +267,12 @@ class _CarCard extends StatelessWidget {
                 SizedBox(height: 34,),
                 InkWell(
                   onTap: (){
-                    Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => const ScannerFrontTireScreen()),
-  );
+
                   },
                   child: _ChipButtonWhite(
                     s: s,
-                    icon: 'assets/scan_icon.png',
-                    label: 'Scan Car Tries', // matches the mock text
+                    icon: 'assets/attendance_icons.png',
+                    label: 'Mark Attendance', // matches the mock text
                   ),
                 ),
               ],
@@ -396,7 +393,7 @@ class _ChipButtonWhite extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-        Image.asset(icon,height: 22 * s,width: 22 * s,color: Colors.black,), // Icon(icon, color: Color(0xFF1F2937), size: 18 * s),
+        Image.asset(icon,height: 22 * s,width: 22 * s), // Icon(icon, color: Color(0xFF1F2937), size: 18 * s),
           SizedBox(width: 8 * s),
           Text(
             label,
