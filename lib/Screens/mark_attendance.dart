@@ -10,8 +10,6 @@ import 'package:intl/intl.dart';
 import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart' as geo;
 
-
-
 const _kPrimaryGrad = LinearGradient(
   colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)],
   begin: Alignment.centerLeft,
@@ -22,7 +20,11 @@ class _GlassPanel extends StatelessWidget {
   final double height;
   final EdgeInsetsGeometry padding;
   final Widget child;
-  const _GlassPanel({required this.height, required this.padding, required this.child});
+  const _GlassPanel({
+    required this.height,
+    required this.padding,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,8 +33,10 @@ class _GlassPanel extends StatelessWidget {
 
     // On Android over GoogleMap: no actual blur → increase opacity + add scrim
     final sigma = onAndroid ? 0.0 : 16.0;
-    final tint  = onAndroid ? Colors.white.withOpacity(0.80) : Colors.white.withOpacity(0.12);
-    final scrimTop    = Colors.black.withOpacity(onAndroid ? 0.20 : 0.06);
+    final tint = onAndroid
+        ? Colors.white.withOpacity(0.80)
+        : Colors.white.withOpacity(0.12);
+    final scrimTop = Colors.black.withOpacity(onAndroid ? 0.20 : 0.06);
     final scrimBottom = Colors.black.withOpacity(onAndroid ? 0.26 : 0.03);
 
     return ClipRRect(
@@ -41,7 +45,10 @@ class _GlassPanel extends StatelessWidget {
         children: [
           // Gradient border
           Container(
-            decoration: const BoxDecoration(gradient: _kPrimaryGrad, borderRadius: r),
+            decoration: const BoxDecoration(
+              gradient: _kPrimaryGrad,
+              borderRadius: r,
+            ),
           ),
           // Glass body
           Padding(
@@ -56,7 +63,10 @@ class _GlassPanel extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: r,
                     color: tint,
-                    border: Border.all(color: Colors.white.withOpacity(0.28), width: 1),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.28),
+                      width: 1,
+                    ),
                     // subtle dark scrim for contrast
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
@@ -67,7 +77,9 @@ class _GlassPanel extends StatelessWidget {
                   child: IconTheme(
                     data: const IconThemeData(color: Colors.white),
                     child: DefaultTextStyle(
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Colors.white),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium!.copyWith(color: Colors.white),
                       child: child,
                     ),
                   ),
@@ -84,14 +96,19 @@ class _GlassPanel extends StatelessWidget {
 class _GlassChip extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
-  const _GlassChip({required this.child, this.padding = const EdgeInsets.all(12)});
+  const _GlassChip({
+    required this.child,
+    this.padding = const EdgeInsets.all(12),
+  });
 
   @override
   Widget build(BuildContext context) {
     final r = BorderRadius.circular(12);
     final onAndroid = Platform.isAndroid;
     final sigma = onAndroid ? 0.0 : 12.0;
-    final tint  = onAndroid ? Colors.white.withOpacity(0.70) : Colors.white.withOpacity(0.14);
+    final tint = onAndroid
+        ? Colors.white.withOpacity(0.70)
+        : Colors.white.withOpacity(0.14);
 
     return ClipRRect(
       borderRadius: r,
@@ -107,7 +124,9 @@ class _GlassChip extends StatelessWidget {
           child: IconTheme(
             data: const IconThemeData(color: Colors.white),
             child: DefaultTextStyle.merge(
-              style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Colors.white),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium!.copyWith(color: Colors.white),
               child: child,
             ),
           ),
@@ -117,7 +136,6 @@ class _GlassChip extends StatelessWidget {
   }
 }
 
-
 class MarkAttendanceView extends StatefulWidget {
   const MarkAttendanceView({super.key});
 
@@ -126,8 +144,6 @@ class MarkAttendanceView extends StatefulWidget {
 }
 
 class _MarkAttendanceViewState extends State<MarkAttendanceView> {
-
-  
   // ===== Brand / gradient =====
   static const LinearGradient kPrimaryGrad = LinearGradient(
     colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)],
@@ -174,35 +190,37 @@ class _MarkAttendanceViewState extends State<MarkAttendanceView> {
     setState(() => distanceInfo = '');
   }
 
-
-
-Future<BitmapDescriptor> _bitmapFromAsset(String path, {int width = 36}) async {
-  final data = await rootBundle.load(path);
-  final codec = await ui.instantiateImageCodec(
-    data.buffer.asUint8List(),
-    targetWidth: width, // <= marker width in logical px
-  );
-  final frame = await codec.getNextFrame();
-  final bytes = (await frame.image.toByteData(format: ui.ImageByteFormat.png))!
-      .buffer
-      .asUint8List();
-  return BitmapDescriptor.fromBytes(bytes);
-}
-
+  Future<BitmapDescriptor> _bitmapFromAsset(
+    String path, {
+    int width = 36,
+  }) async {
+    final data = await rootBundle.load(path);
+    final codec = await ui.instantiateImageCodec(
+      data.buffer.asUint8List(),
+      targetWidth: width, // <= marker width in logical px
+    );
+    final frame = await codec.getNextFrame();
+    final bytes = (await frame.image.toByteData(
+      format: ui.ImageByteFormat.png,
+    ))!.buffer.asUint8List();
+    return BitmapDescriptor.fromBytes(bytes);
+  }
 
   // Future<void> _loadCustomMarkers() async {
   //   _currentMarkerIcon = await BitmapDescriptor.fromAssetImage(
   //      ImageConfiguration(devicePixelRatio: 2.5,size: Size(20, 20)),
   //     'assets/marker.png',
-      
+
   //   );
   // }
 
-  Future<void> _loadCustomMarkers() async { 
-  _currentMarkerIcon = await _bitmapFromAsset('assets/marker.png', width: 88); // try 24–40
-  setState(() {}); // if needed
-}
-
+  Future<void> _loadCustomMarkers() async {
+    _currentMarkerIcon = await _bitmapFromAsset(
+      'assets/marker.png',
+      width: 88,
+    ); // try 24–40
+    setState(() {}); // if needed
+  }
 
   String _currentAddress = "Fetching location...";
   Future<void> _getAddressFromLatLng(LatLng position) async {
@@ -285,16 +303,16 @@ Future<BitmapDescriptor> _bitmapFromAsset(String path, {int width = 36}) async {
       key: _scaffoldKey,
       body: Stack(
         children: [
-            if (_initialCameraPosition != null)
-              GoogleMap(
-                padding: const EdgeInsets.only(bottom: 60),
-                onMapCreated: _onMapCreated,
-                initialCameraPosition: _initialCameraPosition!,
-                mapType: MapType.normal,
-                markers: _markers,
-                myLocationButtonEnabled: false,
-                zoomControlsEnabled: false,
-              ),
+          if (_initialCameraPosition != null)
+            GoogleMap(
+              padding: const EdgeInsets.only(bottom: 60),
+              onMapCreated: _onMapCreated,
+              initialCameraPosition: _initialCameraPosition!,
+              mapType: MapType.normal,
+              markers: _markers,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
+            ),
 
           // Distance pill (kept as-is)
           if (distanceInfo.isNotEmpty)
@@ -317,94 +335,115 @@ Future<BitmapDescriptor> _bitmapFromAsset(String path, {int width = 36}) async {
                 ),
               ),
             ),
-            // ===== Glassy gradient bottom sheet =====
-Positioned(
-  bottom: 60,
-  left: 16,
-  right: 16,
-  child: _GlassPanel(
-    height: 250,
-    padding: const EdgeInsets.all(20),
-    child: DefaultTextStyle.merge(
-      style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Colors.white),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Location",
-              style: TextStyle(
-                fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontFamily: 'ClashGrotesk',
-                  )),
-          const SizedBox(height: 6),
+          // ===== Glassy gradient bottom sheet =====
+          Positioned(
+            bottom: 60,
+            left: 16,
+            right: 16,
+            child: _GlassPanel(
+              height: 250,
+              padding: const EdgeInsets.all(20),
+              child: DefaultTextStyle.merge(
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium!.copyWith(color: Colors.white),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Location",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontFamily: 'ClashGrotesk',
+                      ),
+                    ),
+                    const SizedBox(height: 6),
 
-          // glass address field
-          _GlassChip(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(_currentAddress,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black,  fontFamily: 'ClashGrotesk',fontWeight: FontWeight.w500)),
+                    // glass address field
+                    _GlassChip(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _currentAddress,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.black,
+                                    fontFamily: 'ClashGrotesk',
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: _recenterToCurrentLocation,
+                            icon: ShaderMask(
+                              blendMode: BlendMode.srcIn,
+                              shaderCallback: (bounds) =>
+                                  _kPrimaryGrad.createShader(bounds),
+                              child: const Icon(
+                                Icons.my_location,
+                                size: 24,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+
+                          // IconButton(
+                          //   onPressed: _recenterToCurrentLocation,
+                          //   icon:  Icon(Icons.my_location, color: _kPrimaryGrad),
+                          // ),
+                        ],
+                      ),
+                    ),
+
+                    // const SizedBox(height: 20),
+
+                    // const Row(
+                    //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //   children: [
+                    //     _PunchCard(title: "Punch In", time: "--:--", lightOnGradient: true),
+                    //     _PunchCard(title: "Punch Out", time: "--:--", lightOnGradient: true),
+                    //   ],
+                    // ),
+                    const SizedBox(height: 18),
+
+                    Center(
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.40,
+                        height: 40,
+                        child: _PrimaryGradientButton(
+                          text: 'ATTENDANCE IN',
+                          onPressed: () {},
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Center(
+                      child: Text(
+                        _dateTime,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'ClashGrotesk',
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                IconButton(
-  onPressed: _recenterToCurrentLocation,
-  icon: ShaderMask(
-    blendMode: BlendMode.srcIn,
-    shaderCallback: (bounds) => _kPrimaryGrad.createShader(bounds),
-    child: const Icon(Icons.my_location, size: 24, color: Colors.white),
-  ),
-),
-
-                // IconButton(
-                //   onPressed: _recenterToCurrentLocation,
-                //   icon:  Icon(Icons.my_location, color: _kPrimaryGrad),
-                // ),
-              ],
-            ),
-          ),
-
-          // const SizedBox(height: 20),
-
-          // const Row(
-          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          //   children: [
-          //     _PunchCard(title: "Punch In", time: "--:--", lightOnGradient: true),
-          //     _PunchCard(title: "Punch Out", time: "--:--", lightOnGradient: true),
-          //   ],
-          // ),
-
-          const SizedBox(height: 18),
-
-          Center(
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.40,
-              height: 40,
-              child: _PrimaryGradientButton(
-                text: 'ATTENDANCE IN',
-                onPressed: () {},
               ),
             ),
           ),
 
-          const SizedBox(height: 10),
-
-          Center(
-            child: Text(
-              _dateTime,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white,fontWeight: FontWeight.bold,fontFamily: 'ClashGrotesk',),
-            ),
-          ),
-        ],
-      ),
-    ),
-  ),
-),
-
-
           // ===== Gradient bottom sheet =====
-        /*  Positioned(
+          /*  Positioned(
             bottom: 60,
             left: 16,
             right: 16,
@@ -590,7 +629,7 @@ class _PunchCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final titleColor = lightOnGradient ? Colors.white : const Color(0xFF1E1E1E);
-    final timeColor  = lightOnGradient ? Colors.white : const Color(0xFFEA7A3B);
+    final timeColor = lightOnGradient ? Colors.white : const Color(0xFFEA7A3B);
 
     return Column(
       children: [
