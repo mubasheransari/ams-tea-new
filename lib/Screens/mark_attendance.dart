@@ -10,6 +10,114 @@ import 'package:intl/intl.dart';
 import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart' as geo;
 
+
+
+const _kPrimaryGrad = LinearGradient(
+  colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)],
+  begin: Alignment.centerLeft,
+  end: Alignment.centerRight,
+);
+
+class _GlassPanel extends StatelessWidget {
+  final double height;
+  final EdgeInsetsGeometry padding;
+  final Widget child;
+  const _GlassPanel({required this.height, required this.padding, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    const r = BorderRadius.vertical(top: Radius.circular(10));
+    final onAndroid = Platform.isAndroid;
+
+    // On Android over GoogleMap: no actual blur → increase opacity + add scrim
+    final sigma = onAndroid ? 0.0 : 16.0;
+    final tint  = onAndroid ? Colors.white.withOpacity(0.80) : Colors.white.withOpacity(0.12);
+    final scrimTop    = Colors.black.withOpacity(onAndroid ? 0.20 : 0.06);
+    final scrimBottom = Colors.black.withOpacity(onAndroid ? 0.26 : 0.03);
+
+    return ClipRRect(
+      borderRadius: r,
+      child: Stack(
+        children: [
+          // Gradient border
+          Container(
+            decoration: const BoxDecoration(gradient: _kPrimaryGrad, borderRadius: r),
+          ),
+          // Glass body
+          Padding(
+            padding: const EdgeInsets.all(1.5),
+            child: ClipRRect(
+              borderRadius: r,
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                child: Container(
+                  height: height,
+                  padding: padding,
+                  decoration: BoxDecoration(
+                    borderRadius: r,
+                    color: tint,
+                    border: Border.all(color: Colors.white.withOpacity(0.28), width: 1),
+                    // subtle dark scrim for contrast
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [scrimTop, scrimBottom],
+                    ),
+                  ),
+                  child: IconTheme(
+                    data: const IconThemeData(color: Colors.white),
+                    child: DefaultTextStyle(
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Colors.white),
+                      child: child,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GlassChip extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  const _GlassChip({required this.child, this.padding = const EdgeInsets.all(12)});
+
+  @override
+  Widget build(BuildContext context) {
+    final r = BorderRadius.circular(12);
+    final onAndroid = Platform.isAndroid;
+    final sigma = onAndroid ? 0.0 : 12.0;
+    final tint  = onAndroid ? Colors.white.withOpacity(0.70) : Colors.white.withOpacity(0.14);
+
+    return ClipRRect(
+      borderRadius: r,
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            borderRadius: r,
+            color: tint,
+            border: Border.all(color: Colors.white.withOpacity(0.10), width: 1),
+          ),
+          child: IconTheme(
+            data: const IconThemeData(color: Colors.white),
+            child: DefaultTextStyle.merge(
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Colors.white),
+              child: child,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
 class MarkAttendanceView extends StatefulWidget {
   const MarkAttendanceView({super.key});
 
@@ -18,6 +126,8 @@ class MarkAttendanceView extends StatefulWidget {
 }
 
 class _MarkAttendanceViewState extends State<MarkAttendanceView> {
+
+  
   // ===== Brand / gradient =====
   static const LinearGradient kPrimaryGrad = LinearGradient(
     colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)],
@@ -88,7 +198,7 @@ Future<BitmapDescriptor> _bitmapFromAsset(String path, {int width = 36}) async {
   //   );
   // }
 
-  Future<void> _loadCustomMarkers() async {
+  Future<void> _loadCustomMarkers() async { 
   _currentMarkerIcon = await _bitmapFromAsset('assets/marker.png', width: 88); // try 24–40
   setState(() {}); // if needed
 }
@@ -207,9 +317,94 @@ Future<BitmapDescriptor> _bitmapFromAsset(String path, {int width = 36}) async {
                 ),
               ),
             ),
+            // ===== Glassy gradient bottom sheet =====
+Positioned(
+  bottom: 60,
+  left: 16,
+  right: 16,
+  child: _GlassPanel(
+    height: 250,
+    padding: const EdgeInsets.all(20),
+    child: DefaultTextStyle.merge(
+      style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Colors.white),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Location",
+              style: TextStyle(
+                fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: 'ClashGrotesk',
+                  )),
+          const SizedBox(height: 6),
+
+          // glass address field
+          _GlassChip(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(_currentAddress,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black,  fontFamily: 'ClashGrotesk',fontWeight: FontWeight.w500)),
+                ),
+                IconButton(
+  onPressed: _recenterToCurrentLocation,
+  icon: ShaderMask(
+    blendMode: BlendMode.srcIn,
+    shaderCallback: (bounds) => _kPrimaryGrad.createShader(bounds),
+    child: const Icon(Icons.my_location, size: 24, color: Colors.white),
+  ),
+),
+
+                // IconButton(
+                //   onPressed: _recenterToCurrentLocation,
+                //   icon:  Icon(Icons.my_location, color: _kPrimaryGrad),
+                // ),
+              ],
+            ),
+          ),
+
+          // const SizedBox(height: 20),
+
+          // const Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     _PunchCard(title: "Punch In", time: "--:--", lightOnGradient: true),
+          //     _PunchCard(title: "Punch Out", time: "--:--", lightOnGradient: true),
+          //   ],
+          // ),
+
+          const SizedBox(height: 18),
+
+          Center(
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.40,
+              height: 40,
+              child: _PrimaryGradientButton(
+                text: 'ATTENDANCE IN',
+                onPressed: () {},
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          Center(
+            child: Text(
+              _dateTime,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white,fontWeight: FontWeight.bold,fontFamily: 'ClashGrotesk',),
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+),
+
 
           // ===== Gradient bottom sheet =====
-          Positioned(
+        /*  Positioned(
             bottom: 60,
             left: 16,
             right: 16,
@@ -307,7 +502,7 @@ Future<BitmapDescriptor> _bitmapFromAsset(String path, {int width = 36}) async {
                 ),
               ),
             ),
-          ),
+          ),*/
         ],
       ),
     );
@@ -339,7 +534,7 @@ class _PrimaryGradientButton extends StatelessWidget {
       opacity: disabled ? 0.8 : 1,
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(6),
           gradient: _grad,
           boxShadow: [
             BoxShadow(
@@ -368,7 +563,7 @@ class _PrimaryGradientButton extends StatelessWidget {
                       'ATTENDANCE IN',
                       style: TextStyle(
                         fontFamily: 'ClashGrotesk',
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),
