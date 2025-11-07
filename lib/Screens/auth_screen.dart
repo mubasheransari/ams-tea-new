@@ -433,56 +433,163 @@ class _AuthScreenState extends State<AuthScreen> {
                                           validator: _req,
                                         ),
                                         const SizedBox(height: 12),
+                                        // --- Modern Channel Type dropdown (drop-in replacement) ---
+Container(
+  height: 56,
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.06),
+        blurRadius: 12,
+        offset: const Offset(0, 6),
+      ),
+    ],
+  ),
+  padding: const EdgeInsets.symmetric(horizontal: 12),
+  child: Row(
+    children: [
+      // Optional leading icon (keeps visual consistency with other fields)
+      Container(
+        height: 32,
+        width: 32,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF2F3F5),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: const Icon(
+          Icons.store_mall_directory_rounded,
+          size: 18,
+          color: Color(0xFF1B1B1B),
+        ),
+      ),
+      const SizedBox(width: 10),
 
-                                        // Dropdown (Select Channel Type)
-                                        Container(
-                                          height: 56,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(16),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withOpacity(0.06),
-                                                blurRadius: 12,
-                                                offset: const Offset(0, 6),
-                                              ),
-                                            ],
-                                          ),
-                                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                                          child: DropdownButtonFormField<String>(
-                                            value: _channelType,
-                                            isExpanded: true,
-                                            decoration: const InputDecoration(
-                                              border: InputBorder.none,
-                                              hintText: 'Select Channel Type',
-                                              isCollapsed: true,
-                                              hintStyle: TextStyle(
-                                                fontFamily: 'ClashGrotesk',
-                                                color: Colors.black54,
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            icon: const Icon(Icons.arrow_drop_down),
-                                            items: const [
-                                              'GT','LMT','IMT','OOH','HORECA','BS','N/A',
-                                            ].map((e) => DropdownMenuItem(
-                                              value: e,
-                                              child: Align(
-                                                alignment: Alignment.centerLeft,
-                                                child: Text(
-                                                  e,
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                    letterSpacing: 0.3,
-                                                  ),
-                                                ),
-                                              ),
-                                            )).toList(),
-                                            onChanged: (v) => setState(() => _channelType = v),
-                                            validator: (v) => v == null ? 'Please select' : null,
-                                          ),
-                                        ),
+      // The dropdown
+      Expanded(
+        child: DropdownButtonFormField<String>(
+          value: _channelType,
+          isExpanded: true,
+          alignment: Alignment.centerLeft,        // ← perfect left align
+          style: const TextStyle(                 // ← selected text style
+            fontFamily: 'ClashGrotesk',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+            letterSpacing: 0.3,
+          ),
+          decoration: const InputDecoration(
+            border: InputBorder.none,
+            isCollapsed: true,                    // ← centers text vertically in 56h
+            contentPadding: EdgeInsets.zero,      // ← no extra inset
+            hintText: 'Select Channel Type',
+            hintStyle: TextStyle(
+              fontFamily: 'ClashGrotesk',
+              color: Colors.black54,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
+            ),
+          ),
+          icon: Container(                         // ← modern chevron pill
+            height: 87,
+            width: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEDE7FF),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.expand_more_rounded,
+              size: 20,
+              color: Color(0xFF7F53FD),
+            ),
+          ),
+          borderRadius: BorderRadius.circular(14), // ← rounded popup menu
+          dropdownColor: Colors.white,
+          menuMaxHeight: 320,
+          items: const ['GT','LMT','IMT','OOH','HORECA','BS','N/A']
+              .map(
+                (e) => DropdownMenuItem<String>(
+                  value: e,
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    // tidy vertical rhythm inside the menu
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Text(
+                      e,
+                      style: const TextStyle(
+                        fontFamily: 'ClashGrotesk',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                       letterSpacing: 0.3,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (v) => setState(() => _channelType = v),
+          validator: (v) => v == null ? 'Please select' : null,
+        ),
+      ),
+    ],
+  ),
+)
+,
+
+                                        // Dropdown (Select Channel Type) want to redesigned this dropdown in more modern and smart 
+                                        // Container(
+                                        //   height: 56,
+                                        //   decoration: BoxDecoration(
+                                        //     color: Colors.white,
+                                        //     borderRadius: BorderRadius.circular(16),
+                                        //     boxShadow: [
+                                        //       BoxShadow(
+                                        //         color: Colors.black.withOpacity(0.06),
+                                        //         blurRadius: 12,
+                                        //         offset: const Offset(0, 6),
+                                        //       ),
+                                        //     ],
+                                        //   ),
+                                        //   padding: const EdgeInsets.symmetric(horizontal: 12),
+                                        //   child: DropdownButtonFormField<String>(
+                                        //     value: _channelType,
+                                        //     isExpanded: true,
+                                        //     decoration: const InputDecoration(
+                                        //       border: InputBorder.none,
+                                        //       hintText: 'Select Channel Type',
+                                        //       isCollapsed: true,
+                                        //       hintStyle: TextStyle(
+                                        //         fontFamily: 'ClashGrotesk',
+                                        //         color: Colors.black54,
+                                        //         fontSize: 16,
+                                        //         fontWeight: FontWeight.w600,
+                                        //       ),
+                                        //     ),
+                                        //     icon: const Icon(Icons.arrow_drop_down),
+                                        //     items: const [
+                                        //       'GT','LMT','IMT','OOH','HORECA','BS','N/A',
+                                        //     ].map((e) => DropdownMenuItem(
+                                        //       value: e,
+                                        //       child: Align(
+                                        //         alignment: Alignment.centerLeft,
+                                        //         child: Text(
+                                        //           e,
+                                        //           style: const TextStyle(
+                                        //             fontWeight: FontWeight.w600,
+                                        //             letterSpacing: 0.3,
+                                        //           ),
+                                        //         ),
+                                        //       ),
+                                        //     )).toList(),
+                                        //     onChanged: (v) => setState(() => _channelType = v),
+                                        //     validator: (v) => v == null ? 'Please select' : null,
+                                        //   ),
+                                        // ),
                                         const SizedBox(height: 20),
 
                                         SizedBox(
