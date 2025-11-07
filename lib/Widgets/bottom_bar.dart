@@ -7,8 +7,8 @@ class BottomBar extends StatelessWidget {
     super.key,
     required this.active,
     required this.onChanged,
-    this.scale,         // existing external scale (kept)
-    this.compactFactor, // optional override; default shrinks bar
+    this.scale,     
+    this.compactFactor
   });
 
   final BottomTab active;
