@@ -39,12 +39,10 @@ class BottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Base scale from width; then compact it further
-    const kCompact = 0.84; // <-- shrink everything here
+    const kCompact = 0.84;
     final s = ((scale ?? (MediaQuery.of(context).size.width / 290.0)) *
         (compactFactor ?? kCompact));
 
-    // pre-cache current asset
     precacheImage(AssetImage(_iconPath[active]!), context);
 
     Widget _chip({
@@ -202,8 +200,6 @@ class BottomBar extends StatelessWidget {
               children: [
                 _buildItem(BottomTab.home),
                 _buildItem(BottomTab.reports),
-                // _buildItem(BottomTab.map),
-                // _buildItem(BottomTab.about),
                 _buildItem(BottomTab.profile),
               ],
             ),
