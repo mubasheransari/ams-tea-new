@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
-
 enum BottomTab { home, reports, map, about, profile }
 
 class BottomBar extends StatelessWidget {
@@ -8,48 +7,51 @@ class BottomBar extends StatelessWidget {
     super.key,
     required this.active,
     required this.onChanged,
-    this.scale,
+    this.scale,         // existing external scale (kept)
+    this.compactFactor, // optional override; default shrinks bar
   });
 
   final BottomTab active;
   final ValueChanged<BottomTab> onChanged;
   final double? scale;
+  final double? compactFactor;
 
   void _go(BottomTab tab) {
     if (tab == active) return;
     onChanged(tab);
   }
 
-  // Icons
   static const Map<BottomTab, String> _iconPath = {
     BottomTab.home:    'assets/icons8-home-50.png',
     BottomTab.reports: 'assets/history_bottom_icon.png',
-    // BottomTab.map:     'assets/location_bottom_bar.png',
-    // BottomTab.about:   'assets/technician_bottom_bar.png',
+    // BottomTab.map:   'assets/location_bottom_bar.png',
+    // BottomTab.about: 'assets/technician_bottom_bar.png',
     BottomTab.profile: 'assets/profile_bottom_bar.png',
   };
 
-  // Optional halos for inactive chips
   static const Map<BottomTab, Color?> _halo = {
     BottomTab.home:    Color(0xFFE3F7F3),
     BottomTab.reports: Color(0xFFE4F2FF),
-    // BottomTab.map:     null,
-    // BottomTab.about:   Color(0xFFE4F2FF),
+    // BottomTab.map:   null,
+    // BottomTab.about: Color(0xFFE4F2FF),
     BottomTab.profile: Color(0xFFE4F2FF),
   };
 
   @override
   Widget build(BuildContext context) {
-    final s = scale ?? (MediaQuery.of(context).size.width / 290.0);
+    // Base scale from width; then compact it further
+    const kCompact = 0.84; // <-- shrink everything here
+    final s = ((scale ?? (MediaQuery.of(context).size.width / 290.0)) *
+        (compactFactor ?? kCompact));
 
-    // ✅ Ensure the currently active icon is decoded and ready on first frame
+    // pre-cache current asset
     precacheImage(AssetImage(_iconPath[active]!), context);
 
     Widget _chip({
       required String asset,
       required VoidCallback onTap,
       Color? haloColor,
-      Color? iconColor, // null = keep original asset colors
+      Color? iconColor,
       bool lift = false,
     }) {
       final size = 56 * s;
@@ -109,7 +111,6 @@ class BottomBar extends StatelessWidget {
       );
     }
 
-    // Active gradient chip (icon = solid white)
     Widget _gradientChip({
       required String asset,
       required VoidCallback onTap,
@@ -138,9 +139,8 @@ class BottomBar extends StatelessWidget {
               width: 26 * s,
               height: 26 * s,
               fit: BoxFit.contain,
-              // ✅ If the asset isn't ready/missing, show a white Material icon so the default tab isn’t blank
               errorBuilder: (_, __, ___) => Icon(
-                Icons.circle, // or Icons.home_filled if you want
+                Icons.circle,
                 size: 22 * s,
                 color: Colors.white,
               ),
@@ -183,7 +183,7 @@ class BottomBar extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 0.0, sigmaY: 0.0),
           child: Container(
-            height: 78 * s,
+            height: 78 * s, // overall bar height (scaled smaller now)
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.92),
               borderRadius: BorderRadius.circular(44 * s),
@@ -213,4 +213,3 @@ class BottomBar extends StatelessWidget {
     );
   }
 }
-

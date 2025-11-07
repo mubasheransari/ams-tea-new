@@ -11,6 +11,7 @@ class BottomActionBar extends StatelessWidget {
     required this.galleryIconAsset,
     required this.captureIconAsset,
     required this.docsIconAsset,
+    this.scaleFactor, // optional override if you want to tweak from outside
   });
 
   final VoidCallback onPickGallery;
@@ -18,15 +19,18 @@ class BottomActionBar extends StatelessWidget {
   final VoidCallback onPickDocs;
   final bool enabled;
 
-  /// Asset paths you said you already have
   final String galleryIconAsset; // e.g. 'assets/icons/gallery.png'
   final String captureIconAsset; // e.g. 'assets/icons/scan.png'
   final String docsIconAsset;    // e.g. 'assets/icons/docs.png'
 
+  /// Set < 1.0 to shrink, > 1.0 to enlarge. Default makes it smaller already.
+  final double? scaleFactor;
+
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.sizeOf(context).width;
-    final s = w / 390.0; // simple scale (base width 390)
+    const kCompact = 0.84; // <-- compactness factor (shrink everything)
+    final s = (w / 390.0) * (scaleFactor ?? kCompact);
 
     return SizedBox(
       height: 148 * s,
@@ -35,7 +39,7 @@ class BottomActionBar extends StatelessWidget {
         children: [
           // pill container
           Positioned.fill(
-            top: 32 * s, // give room so the middle circle can sit inside nicely
+            top: 32 * s,
             child: Container(
               margin: EdgeInsets.symmetric(horizontal: 16 * s),
               decoration: BoxDecoration(
@@ -52,20 +56,19 @@ class BottomActionBar extends StatelessWidget {
                     offset: Offset(0, 10),
                   ),
                 ],
-                border: Border.all(color: Color(0xFFE6EBF5)),
+                border: Border.all(color: const Color(0xFFE6EBF5)),
               ),
               padding: EdgeInsets.fromLTRB(22 * s, 1 * s, 22 * s, 8 * s),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  
                   _circleWithLabel(
                     s: s,
                     label: 'Images',
                     iconAsset: galleryIconAsset,
                     onTap: onPickGallery,
                   ),
-                  SizedBox(width: 86 * s), // space reserved for center button
+                  SizedBox(width: 86 * s), // space for center button
                   _circleWithLabel(
                     s: s,
                     label: 'Documents',
@@ -124,7 +127,6 @@ class BottomActionBar extends StatelessWidget {
               iconAsset,
               width: 48 * s,
               height: 48 * s,
-             // color: const Color(0xFF111827), // black-ish
             ),
           ),
           SizedBox(height: 8 * s),
@@ -182,14 +184,13 @@ class _CenterCaptureButton extends StatelessWidget {
         child: Container(
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.transparent, // we keep only the outer gradient
+            color: Colors.transparent,
           ),
           alignment: Alignment.center,
           child: Image.asset(
             iconAsset,
             width: 54 * s,
             height: 54 * s,
-          //  color: Colors.white,
           ),
         ),
       ),
