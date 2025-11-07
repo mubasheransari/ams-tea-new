@@ -8,6 +8,17 @@ import 'package:new_amst_flutter/Screens/splash_screen.dart';
 import 'package:new_amst_flutter/Widgets/watermarked_widget.dart';
 import 'dart:ui' as ui;
 
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
+import 'package:new_amst_flutter/Bloc/auth_event.dart';
+import 'package:new_amst_flutter/Bloc/auth_state.dart';
+import 'package:new_amst_flutter/Screens/splash_screen.dart';
+import 'package:new_amst_flutter/Widgets/watermarked_widget.dart';
+import 'dart:ui' as ui;
+
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
   @override
@@ -17,6 +28,10 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   int tab = 0; // 0 = Login, 1 = SignUp
   bool remember = true;
+
+  // Scroll controller to move logo with SignUp content
+  final ScrollController _scrollCtrl = ScrollController();
+  double _scrollY = 0.0;
 
   // Separate form keys
   final _loginFormKey = GlobalKey<FormState>();
@@ -43,10 +58,22 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _signupObscure = true;
 
   @override
+  void initState() {
+    super.initState();
+    _scrollCtrl.addListener(() {
+      if (!_scrollCtrl.hasClients) return;
+      if (tab != 1) return; // only track offset on SignUp
+      final off = _scrollCtrl.offset;
+      if (off != _scrollY) {
+        setState(() => _scrollY = off);
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _loginEmailCtrl.dispose();
     _loginPassCtrl.dispose();
-
     _empCodeCtrl.dispose();
     _nameCtrl.dispose();
     _cnicCtrl.dispose();
@@ -57,10 +84,10 @@ class _AuthScreenState extends State<AuthScreen> {
     _signupPassCtrl.dispose();
     _distCtrl.dispose();
     _territoryCtrl.dispose();
+    _scrollCtrl.dispose();
     super.dispose();
   }
 
-  // ---------------- Validators ----------------
   String? _validateLoginEmail(String? v) {
     final s = v?.trim() ?? '';
     if (s.isEmpty) return 'Email is required';
@@ -100,7 +127,6 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   String? _cnic(String? v) {
-    // Accept 13 digits with or without dashes, format is XXXXX-XXXXXXX-X
     final digits = (v ?? '').replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return 'CNIC is required';
     if (digits.length != 13) return 'Enter 13 digits';
@@ -110,7 +136,6 @@ class _AuthScreenState extends State<AuthScreen> {
   String? _pkMobile(String? v, {bool required = true}) {
     final s = (v ?? '').trim();
     if (s.isEmpty) return required ? 'Mobile is required' : null;
-    // Accept: 03XXXXXXXXX (11) OR 92XXXXXXXXXX (12)
     final ok = RegExp(r'^(03\d{9}|92\d{10})$').hasMatch(s);
     return ok ? null : 'Use 03XXXXXXXXX or 92XXXXXXXXXX';
   }
@@ -138,7 +163,6 @@ class _AuthScreenState extends State<AuthScreen> {
         last = sp.sublist(1).join(' ');
       }
 
-      // Send minimal payload (adjust to your backend)
       bloc.add(
         SignupRequested(
           firstName: first,
@@ -154,6 +178,11 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
+    // Keep baseline the same visually
+    final double baseTop = tab == 0 ? 23.0 : 0.0;
+    // Scroll logo only with SignUp; fixed on Login
+    final double logoTop = tab == 1 ? (baseTop - _scrollY) : baseTop;
+
     return BlocConsumer<AuthBloc, AuthState>(
       listenWhen: (p, c) =>
           p.loginStatus != c.loginStatus ||
@@ -161,9 +190,8 @@ class _AuthScreenState extends State<AuthScreen> {
           p.error != c.error,
       listener: (context, state) {
         if (state.error != null && state.error!.isNotEmpty) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.error!)));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.error!)));
         }
         if (state.loginStatus == AuthStatus.success) {
           Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
@@ -201,10 +229,10 @@ class _AuthScreenState extends State<AuthScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.45),
+                            color: Colors.white.withOpacity(0.10),
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.75),
+                              color: Colors.white.withOpacity(0.10),
                               width: 1,
                             ),
                             boxShadow: [
@@ -216,17 +244,28 @@ class _AuthScreenState extends State<AuthScreen> {
                             ],
                           ),
                           child: SingleChildScrollView(
+                            controller: _scrollCtrl, // attach controller
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                tab == 1 ? SizedBox(height: 150) : Container(),
+                                tab == 1
+                                    ? const SizedBox(height: 150)
+                                    : const SizedBox.shrink(),
 
                                 _AuthToggle(
                                   activeIndex: tab,
                                   onChanged: (i) {
                                     _loginFormKey.currentState?.reset();
                                     _signupFormKey.currentState?.reset();
-                                    setState(() => tab = i);
+
+                                    // reset scroll + logo position when toggling tabs
+                                    if (_scrollCtrl.hasClients) {
+                                      _scrollCtrl.jumpTo(0);
+                                    }
+                                    setState(() {
+                                      tab = i;
+                                      _scrollY = 0;
+                                    });
                                   },
                                 ),
                                 const SizedBox(height: 18),
@@ -239,40 +278,31 @@ class _AuthScreenState extends State<AuthScreen> {
                                     child: Column(
                                       children: [
                                         _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'login_email',
-                                          ),
+                                          fieldKey: const ValueKey('login_email'),
                                           hint: 'Email',
                                           icon: 'assets/email_icon.png',
                                           controller: _loginEmailCtrl,
-                                          keyboardType:
-                                              TextInputType.emailAddress,
+                                          keyboardType: TextInputType.emailAddress,
                                           validator: _validateLoginEmail,
                                         ),
                                         const SizedBox(height: 12),
                                         _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'login_password',
-                                          ),
+                                          fieldKey: const ValueKey('login_password'),
                                           hint: 'Password',
                                           icon: 'assets/password_icon.png',
                                           controller: _loginPassCtrl,
                                           obscureText: _loginObscure,
                                           onToggleObscure: () => setState(
-                                            () =>
-                                                _loginObscure = !_loginObscure,
+                                            () => _loginObscure = !_loginObscure,
                                           ),
                                           validator: _validateLoginPassword,
                                         ),
                                         const SizedBox(height: 7),
                                         Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
+                                          mainAxisAlignment: MainAxisAlignment.end,
                                           children: [
                                             Padding(
-                                              padding: const EdgeInsets.only(
-                                                left: 8.0,
-                                              ),
+                                              padding: const EdgeInsets.only(left: 8.0),
                                               child: TextButton(
                                                 onPressed: () {},
                                                 child: const Text(
@@ -291,12 +321,8 @@ class _AuthScreenState extends State<AuthScreen> {
                                           width: 160,
                                           height: 40,
                                           child: _PrimaryGradientButton(
-                                            text: loginLoading
-                                                ? 'Please wait...'
-                                                : 'LOGIN',
-                                            onPressed: loginLoading
-                                                ? null
-                                                : _submit,
+                                            text: loginLoading ? 'Please wait...' : 'LOGIN',
+                                            onPressed: loginLoading ? null : _submit,
                                             loading: loginLoading,
                                           ),
                                         ),
@@ -304,7 +330,13 @@ class _AuthScreenState extends State<AuthScreen> {
                                         _FooterSwitch(
                                           prompt: "Don’t have an account? ",
                                           action: "Create an account",
-                                          onTap: () => setState(() => tab = 1),
+                                          onTap: () => setState(() {
+                                            if (_scrollCtrl.hasClients) {
+                                              _scrollCtrl.jumpTo(0);
+                                            }
+                                            tab = 1;
+                                            _scrollY = 0;
+                                          }),
                                         ),
                                       ],
                                     ),
@@ -327,9 +359,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                         const SizedBox(height: 12),
 
                                         _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'signup_name',
-                                          ),
+                                          fieldKey: const ValueKey('signup_name'),
                                           hint: 'Employee Name',
                                           icon: 'assets/name_icon.png',
                                           controller: _nameCtrl,
@@ -337,16 +367,11 @@ class _AuthScreenState extends State<AuthScreen> {
                                         ),
                                         const SizedBox(height: 12),
 
-                                        _CnicField(
-                                          controller: _cnicCtrl,
-                                          validator: _cnic,
-                                        ),
+                                        _CnicField(controller: _cnicCtrl, validator: _cnic),
                                         const SizedBox(height: 12),
 
                                         _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'signup_address',
-                                          ),
+                                          fieldKey: const ValueKey('signup_address'),
                                           hint: 'Employee Address',
                                           icon: 'assets/name_icon.png',
                                           controller: _addressCtrl,
@@ -364,44 +389,35 @@ class _AuthScreenState extends State<AuthScreen> {
                                         _PkMobileField(
                                           hint: 'Employee Mobile 2',
                                           controller: _mob2Ctrl,
-                                          validator: (v) =>
-                                              _pkMobile(v, required: false),
+                                          validator: (v) => _pkMobile(v, required: false),
                                         ),
                                         const SizedBox(height: 12),
 
                                         _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'signup_email',
-                                          ),
+                                          fieldKey: const ValueKey('signup_email'),
                                           hint: 'Employee Email',
                                           icon: 'assets/email_icon.png',
                                           controller: _signupEmailCtrl,
-                                          keyboardType:
-                                              TextInputType.emailAddress,
+                                          keyboardType: TextInputType.emailAddress,
                                           validator: _validateSignupEmail,
                                         ),
                                         const SizedBox(height: 12),
 
                                         _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'signup_password',
-                                          ),
+                                          fieldKey: const ValueKey('signup_password'),
                                           hint: 'Employee Password',
                                           icon: 'assets/password_icon.png',
                                           controller: _signupPassCtrl,
                                           obscureText: _signupObscure,
                                           onToggleObscure: () => setState(
-                                            () => _signupObscure =
-                                                !_signupObscure,
+                                            () => _signupObscure = !_signupObscure,
                                           ),
                                           validator: _validateSignupPassword,
                                         ),
                                         const SizedBox(height: 12),
 
                                         _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'signup_distribution',
-                                          ),
+                                          fieldKey: const ValueKey('signup_distribution'),
                                           hint: 'Distribution Name',
                                           icon: 'assets/name_icon.png',
                                           controller: _distCtrl,
@@ -410,9 +426,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                         const SizedBox(height: 12),
 
                                         _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'signup_territory',
-                                          ),
+                                          fieldKey: const ValueKey('signup_territory'),
                                           hint: 'Territory',
                                           icon: 'assets/name_icon.png',
                                           controller: _territoryCtrl,
@@ -425,22 +439,16 @@ class _AuthScreenState extends State<AuthScreen> {
                                           height: 56,
                                           decoration: BoxDecoration(
                                             color: Colors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              16,
-                                            ),
+                                            borderRadius: BorderRadius.circular(16),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.black.withOpacity(
-                                                  0.06,
-                                                ),
+                                                color: Colors.black.withOpacity(0.06),
                                                 blurRadius: 12,
                                                 offset: const Offset(0, 6),
                                               ),
                                             ],
                                           ),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                          ),
+                                          padding: const EdgeInsets.symmetric(horizontal: 12),
                                           child: DropdownButtonFormField<String>(
                                             value: _channelType,
                                             isExpanded: true,
@@ -455,65 +463,49 @@ class _AuthScreenState extends State<AuthScreen> {
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
-                                            icon: const Icon(
-                                              Icons.arrow_drop_down,
-                                            ),
-                                            items:
-                                                const [
-                                                      'GT',
-                                                      'LMT',
-                                                      'IMT',
-                                                      'OOH',
-                                                      'HORECA',
-                                                      'BS',
-                                                      'N/A',
-                                                    ]
-                                                    .map(
-                                                      (e) => DropdownMenuItem(
-                                                        value: e,
-                                                        child: Align(
-                                                          alignment: Alignment
-                                                              .centerLeft,
-                                                          child: Text(
-                                                            e,
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                  letterSpacing:
-                                                                      0.3,
-                                                                ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    )
-                                                    .toList(),
-                                            onChanged: (v) => setState(
-                                              () => _channelType = v,
-                                            ),
-                                            validator: (v) => v == null
-                                                ? 'Please select'
-                                                : null,
+                                            icon: const Icon(Icons.arrow_drop_down),
+                                            items: const [
+                                              'GT','LMT','IMT','OOH','HORECA','BS','N/A',
+                                            ].map((e) => DropdownMenuItem(
+                                              value: e,
+                                              child: Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: Text(
+                                                  e,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                    letterSpacing: 0.3,
+                                                  ),
+                                                ),
+                                              ),
+                                            )).toList(),
+                                            onChanged: (v) => setState(() => _channelType = v),
+                                            validator: (v) => v == null ? 'Please select' : null,
                                           ),
                                         ),
                                         const SizedBox(height: 20),
 
-                                        _PrimaryGradientButton(
-                                          text: signupLoading
-                                              ? 'Please wait...'
-                                              : 'SignUp',
-                                          onPressed: signupLoading
-                                              ? null
-                                              : _submit,
-                                          loading: signupLoading,
+                                        SizedBox(
+                                               width: 160,
+                                          height: 40,
+                                          child: _PrimaryGradientButton(
+                                            text: signupLoading ? 'Please wait...' : 'SignUp',
+                                            onPressed: signupLoading ? null : _submit,
+                                            loading: signupLoading,
+                                          ),
                                         ),
                                         const SizedBox(height: 18),
 
                                         _FooterSwitch(
                                           prompt: "Already have an account? ",
                                           action: "Login",
-                                          onTap: () => setState(() => tab = 0),
+                                          onTap: () => setState(() {
+                                            if (_scrollCtrl.hasClients) {
+                                              _scrollCtrl.jumpTo(0);
+                                            }
+                                            tab = 0;
+                                            _scrollY = 0;
+                                          }),
                                         ),
                                       ],
                                     ),
@@ -528,9 +520,9 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
               ),
 
-              // ---- Logo sits ON TOP of everything so it never hides ----
+              // Logo: scrolls with SignUp, fixed on Login
               Positioned(
-                top: tab == 0 ? 23 : 0,
+                top: logoTop,
                 left: 57,
                 right: 0,
                 child: IgnorePointer(
@@ -550,8 +542,6 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 }
-
-/* ========================= UI pieces ========================= */
 
 class _AuthToggle extends StatelessWidget {
   const _AuthToggle({required this.activeIndex, required this.onChanged});
@@ -696,7 +686,7 @@ class _InputCard extends StatelessWidget {
           Expanded(
             child: TextFormField(
               key: fieldKey,
-              textAlign: TextAlign.start, // left/start like _PkMobileField
+              textAlign: TextAlign.start,
               style: const TextStyle(
                 fontFamily: 'ClashGrotesk',
                 color: Colors.black,
@@ -833,9 +823,9 @@ class _FooterSwitch extends StatelessWidget {
         ),
         GestureDetector(
           onTap: onTap,
-          child: const Text(
-            'Login',
-            style: TextStyle(
+          child: Text(
+            action, // ← use provided action text
+            style: const TextStyle(
               fontFamily: 'ClashGrotesk',
               fontSize: 14.5,
               color: Color(0xFF1E9BFF),
