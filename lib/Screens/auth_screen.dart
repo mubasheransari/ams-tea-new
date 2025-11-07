@@ -8,7 +8,6 @@ import 'package:new_amst_flutter/Screens/splash_screen.dart';
 import 'package:new_amst_flutter/Widgets/watermarked_widget.dart';
 import 'dart:ui' as ui;
 
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -190,8 +189,9 @@ class _AuthScreenState extends State<AuthScreen> {
           p.error != c.error,
       listener: (context, state) {
         if (state.error != null && state.error!.isNotEmpty) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(state.error!)));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.error!)));
         }
         if (state.loginStatus == AuthStatus.success) {
           Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
@@ -278,31 +278,40 @@ class _AuthScreenState extends State<AuthScreen> {
                                     child: Column(
                                       children: [
                                         _InputCard(
-                                          fieldKey: const ValueKey('login_email'),
+                                          fieldKey: const ValueKey(
+                                            'login_email',
+                                          ),
                                           hint: 'Email',
                                           icon: 'assets/email_icon.png',
                                           controller: _loginEmailCtrl,
-                                          keyboardType: TextInputType.emailAddress,
+                                          keyboardType:
+                                              TextInputType.emailAddress,
                                           validator: _validateLoginEmail,
                                         ),
                                         const SizedBox(height: 12),
                                         _InputCard(
-                                          fieldKey: const ValueKey('login_password'),
+                                          fieldKey: const ValueKey(
+                                            'login_password',
+                                          ),
                                           hint: 'Password',
                                           icon: 'assets/password_icon.png',
                                           controller: _loginPassCtrl,
                                           obscureText: _loginObscure,
                                           onToggleObscure: () => setState(
-                                            () => _loginObscure = !_loginObscure,
+                                            () =>
+                                                _loginObscure = !_loginObscure,
                                           ),
                                           validator: _validateLoginPassword,
                                         ),
                                         const SizedBox(height: 7),
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
                                           children: [
                                             Padding(
-                                              padding: const EdgeInsets.only(left: 8.0),
+                                              padding: const EdgeInsets.only(
+                                                left: 8.0,
+                                              ),
                                               child: TextButton(
                                                 onPressed: () {},
                                                 child: const Text(
@@ -321,8 +330,12 @@ class _AuthScreenState extends State<AuthScreen> {
                                           width: 160,
                                           height: 40,
                                           child: _PrimaryGradientButton(
-                                            text: loginLoading ? 'Please wait...' : 'LOGIN',
-                                            onPressed: loginLoading ? null : _submit,
+                                            text: loginLoading
+                                                ? 'Please wait...'
+                                                : 'LOGIN',
+                                            onPressed: loginLoading
+                                                ? null
+                                                : _submit,
                                             loading: loginLoading,
                                           ),
                                         ),
@@ -359,7 +372,9 @@ class _AuthScreenState extends State<AuthScreen> {
                                         const SizedBox(height: 12),
 
                                         _InputCard(
-                                          fieldKey: const ValueKey('signup_name'),
+                                          fieldKey: const ValueKey(
+                                            'signup_name',
+                                          ),
                                           hint: 'Employee Name',
                                           icon: 'assets/name_icon.png',
                                           controller: _nameCtrl,
@@ -367,11 +382,16 @@ class _AuthScreenState extends State<AuthScreen> {
                                         ),
                                         const SizedBox(height: 12),
 
-                                        _CnicField(controller: _cnicCtrl, validator: _cnic),
+                                        _CnicField(
+                                          controller: _cnicCtrl,
+                                          validator: _cnic,
+                                        ),
                                         const SizedBox(height: 12),
 
                                         _InputCard(
-                                          fieldKey: const ValueKey('signup_address'),
+                                          fieldKey: const ValueKey(
+                                            'signup_address',
+                                          ),
                                           hint: 'Employee Address',
                                           icon: 'assets/name_icon.png',
                                           controller: _addressCtrl,
@@ -389,35 +409,44 @@ class _AuthScreenState extends State<AuthScreen> {
                                         _PkMobileField(
                                           hint: 'Employee Mobile 2',
                                           controller: _mob2Ctrl,
-                                          validator: (v) => _pkMobile(v, required: false),
+                                          validator: (v) =>
+                                              _pkMobile(v, required: false),
                                         ),
                                         const SizedBox(height: 12),
 
                                         _InputCard(
-                                          fieldKey: const ValueKey('signup_email'),
+                                          fieldKey: const ValueKey(
+                                            'signup_email',
+                                          ),
                                           hint: 'Employee Email',
                                           icon: 'assets/email_icon.png',
                                           controller: _signupEmailCtrl,
-                                          keyboardType: TextInputType.emailAddress,
+                                          keyboardType:
+                                              TextInputType.emailAddress,
                                           validator: _validateSignupEmail,
                                         ),
                                         const SizedBox(height: 12),
 
                                         _InputCard(
-                                          fieldKey: const ValueKey('signup_password'),
+                                          fieldKey: const ValueKey(
+                                            'signup_password',
+                                          ),
                                           hint: 'Employee Password',
                                           icon: 'assets/password_icon.png',
                                           controller: _signupPassCtrl,
                                           obscureText: _signupObscure,
                                           onToggleObscure: () => setState(
-                                            () => _signupObscure = !_signupObscure,
+                                            () => _signupObscure =
+                                                !_signupObscure,
                                           ),
                                           validator: _validateSignupPassword,
                                         ),
                                         const SizedBox(height: 12),
 
                                         _InputCard(
-                                          fieldKey: const ValueKey('signup_distribution'),
+                                          fieldKey: const ValueKey(
+                                            'signup_distribution',
+                                          ),
                                           hint: 'Distribution Name',
                                           icon: 'assets/name_icon.png',
                                           controller: _distCtrl,
@@ -426,7 +455,9 @@ class _AuthScreenState extends State<AuthScreen> {
                                         const SizedBox(height: 12),
 
                                         _InputCard(
-                                          fieldKey: const ValueKey('signup_territory'),
+                                          fieldKey: const ValueKey(
+                                            'signup_territory',
+                                          ),
                                           hint: 'Territory',
                                           icon: 'assets/name_icon.png',
                                           controller: _territoryCtrl,
@@ -434,114 +465,165 @@ class _AuthScreenState extends State<AuthScreen> {
                                         ),
                                         const SizedBox(height: 12),
                                         // --- Modern Channel Type dropdown (drop-in replacement) ---
-Container(
-  height: 56,
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(16),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.06),
-        blurRadius: 12,
-        offset: const Offset(0, 6),
-      ),
-    ],
-  ),
-  padding: const EdgeInsets.symmetric(horizontal: 12),
-  child: Row(
-    children: [
-      // Optional leading icon (keeps visual consistency with other fields)
-      Container(
-        height: 32,
-        width: 32,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF2F3F5),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: const Icon(
-          Icons.store_mall_directory_rounded,
-          size: 18,
-          color: Color(0xFF1B1B1B),
-        ),
-      ),
-      const SizedBox(width: 10),
+                                        Container(
+                                          height: 56,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(
+                                                  0.06,
+                                                ),
+                                                blurRadius: 12,
+                                                offset: const Offset(0, 6),
+                                              ),
+                                            ],
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              // Optional leading icon (keeps visual consistency with other fields)
+                                              Container(
+                                                height: 32,
+                                                width: 32,
+                                                alignment: Alignment.center,
+                                                decoration: BoxDecoration(
+                                                  color: const Color(
+                                                    0xFFF2F3F5,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                                child: const Icon(
+                                                  Icons
+                                                      .store_mall_directory_rounded,
+                                                  size: 18,
+                                                  color: Color(0xFF1B1B1B),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
 
-      // The dropdown
-      Expanded(
-        child: DropdownButtonFormField<String>(
-          value: _channelType,
-          isExpanded: true,
-          alignment: Alignment.centerLeft,        // ← perfect left align
-          style: const TextStyle(                 // ← selected text style
-            fontFamily: 'ClashGrotesk',
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-            letterSpacing: 0.3,
-          ),
-          decoration: const InputDecoration(
-            border: InputBorder.none,
-            isCollapsed: true,                    // ← centers text vertically in 56h
-            contentPadding: EdgeInsets.zero,      // ← no extra inset
-            hintText: 'Select Channel Type',
-            hintStyle: TextStyle(
-              fontFamily: 'ClashGrotesk',
-              color: Colors.black54,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
-            ),
-          ),
-          icon: Container(                         // ← modern chevron pill
-            height: 87,
-            width: 34,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEDE7FF),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.expand_more_rounded,
-              size: 20,
-              color: Color(0xFF7F53FD),
-            ),
-          ),
-          borderRadius: BorderRadius.circular(14), // ← rounded popup menu
-          dropdownColor: Colors.white,
-          menuMaxHeight: 320,
-          items: const ['GT','LMT','IMT','OOH','HORECA','BS','N/A']
-              .map(
-                (e) => DropdownMenuItem<String>(
-                  value: e,
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    // tidy vertical rhythm inside the menu
-                    padding: const EdgeInsets.symmetric(vertical: 3),
-                    child: Text(
-                      e,
-                      style: const TextStyle(
-                        fontFamily: 'ClashGrotesk',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                       letterSpacing: 0.3,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
-          onChanged: (v) => setState(() => _channelType = v),
-          validator: (v) => v == null ? 'Please select' : null,
-        ),
-      ),
-    ],
-  ),
-)
-,
+                                              // The dropdown
+                                              Expanded(
+                                                child: DropdownButtonFormField<String>(
+                                                  value: _channelType,
+                                                  isExpanded: true,
+                                                  alignment: Alignment
+                                                      .centerLeft, // ← perfect left align
+                                                  style: const TextStyle(
+                                                    // ← selected text style
+                                                    fontFamily: 'ClashGrotesk',
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.black,
+                                                    letterSpacing: 0.3,
+                                                  ),
+                                                  decoration: const InputDecoration(
+                                                    border: InputBorder.none,
+                                                    isCollapsed:
+                                                        true, // ← centers text vertically in 56h
+                                                    contentPadding: EdgeInsets
+                                                        .zero, // ← no extra inset
+                                                    hintText:
+                                                        'Select Channel Type',
+                                                    hintStyle: TextStyle(
+                                                      fontFamily:
+                                                          'ClashGrotesk',
+                                                      color: Colors.black54,
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      letterSpacing: 0.3,
+                                                    ),
+                                                  ),
+                                                  icon: Container(
+                                                    // ← modern chevron pill
+                                                    height: 87,
+                                                    width: 34,
+                                                    alignment: Alignment.center,
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0xFFEDE7FF,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.expand_more_rounded,
+                                                      size: 20,
+                                                      color: Color(0xFF7F53FD),
+                                                    ),
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        14,
+                                                      ), // ← rounded popup menu
+                                                  dropdownColor: Colors.white,
+                                                  menuMaxHeight: 320,
+                                                  items:
+                                                      const [
+                                                            'GT',
+                                                            'LMT',
+                                                            'IMT',
+                                                            'OOH',
+                                                            'HORECA',
+                                                            'BS',
+                                                            'N/A',
+                                                          ]
+                                                          .map(
+                                                            (
+                                                              e,
+                                                            ) => DropdownMenuItem<String>(
+                                                              value: e,
+                                                              alignment: Alignment
+                                                                  .centerLeft,
+                                                              child: Padding(
+                                                                // tidy vertical rhythm inside the menu
+                                                                padding:
+                                                                    const EdgeInsets.symmetric(
+                                                                      vertical:
+                                                                          3,
+                                                                    ),
+                                                                child: Text(
+                                                                  e,
+                                                                  style: const TextStyle(
+                                                                    fontFamily:
+                                                                        'ClashGrotesk',
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600,
+                                                                    letterSpacing:
+                                                                        0.3,
+                                                                    color: Colors
+                                                                        .black,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          )
+                                                          .toList(),
+                                                  onChanged: (v) => setState(
+                                                    () => _channelType = v,
+                                                  ),
+                                                  validator: (v) => v == null
+                                                      ? 'Please select'
+                                                      : null,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
 
-                                        // Dropdown (Select Channel Type) want to redesigned this dropdown in more modern and smart 
+                                        // Dropdown (Select Channel Type) want to redesigned this dropdown in more modern and smart
                                         // Container(
                                         //   height: 56,
                                         //   decoration: BoxDecoration(
@@ -593,11 +675,15 @@ Container(
                                         const SizedBox(height: 20),
 
                                         SizedBox(
-                                               width: 160,
+                                          width: 160,
                                           height: 40,
                                           child: _PrimaryGradientButton(
-                                            text: signupLoading ? 'Please wait...' : 'SignUp',
-                                            onPressed: signupLoading ? null : _submit,
+                                            text: signupLoading
+                                                ? 'Please wait...'
+                                                : 'SIGNUP',
+                                            onPressed: signupLoading
+                                                ? null
+                                                : _submit,
                                             loading: signupLoading,
                                           ),
                                         ),
