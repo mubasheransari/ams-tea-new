@@ -5,6 +5,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
 import 'package:new_amst_flutter/Bloc/auth_event.dart';
 import 'package:new_amst_flutter/Screens/location_google_maos.dart';
+import 'package:new_amst_flutter/Screens/mark_attendance.dart' show MarkAttendanceView;
 import 'package:new_amst_flutter/Screens/report_history_screen.dart';
 import 'package:new_amst_flutter/Screens/scanner_screen.dart';
 
@@ -161,7 +162,6 @@ class _Header extends StatelessWidget {
   }
 }
 
-/* ------------------------ Search ------------------------ */
 class _SearchBar extends StatelessWidget {
   const _SearchBar({required this.s});
   final double s;
@@ -269,6 +269,13 @@ class _CarCard extends StatelessWidget {
                 SizedBox(height: 34,),
                 InkWell(
                   onTap: (){
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        builder: (_) => const MarkAttendanceView(),
+        fullscreenDialog: true, // optional; nice iOS-style sheet
+      ),
+    );
+                  //  Navigator.push(context, MaterialPageRoute(builder: (context)=> MarkAttendanceView()));
 
                   },
                   child: _ChipButtonWhite(
@@ -286,7 +293,6 @@ class _CarCard extends StatelessWidget {
   }
 }
 
-/* ------------------------ Bike Card ------------------------ */
 class _BikeCard extends StatelessWidget {
   const _BikeCard({required this.s});
   final double s;

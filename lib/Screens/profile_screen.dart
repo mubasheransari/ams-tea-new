@@ -126,7 +126,7 @@ class ProfilePage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                                "Test User",   // "${context.read<AuthBloc>().state.profile!.firstName.toString() + context.read<AuthBloc>().state.profile!.lastName.toString()}",//'William David',
+                                "Test User",  
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
