@@ -157,7 +157,7 @@ class _SearchBar extends StatelessWidget {
           SizedBox(width: 8 * s),
           Expanded(
             child: Text(
-              'Search the latest inspection',
+              'Search',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
