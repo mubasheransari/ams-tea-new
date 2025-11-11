@@ -143,7 +143,10 @@ class _AuthScreenState extends State<AuthScreen> {
 
   // ---------------- Submit ----------------
   void _submit() {
-Navigator.push(context, MaterialPageRoute(builder: (context)=> AppShell()));
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AppShell()),
+    );
   }
 
   @override
@@ -155,471 +158,448 @@ Navigator.push(context, MaterialPageRoute(builder: (context)=> AppShell()));
     // Scroll logo only with SignUp; fixed on Login
     final double logoTop = tab == 1 ? (baseTop - _scrollY) : baseTop;
 
-    return   Scaffold(
-          backgroundColor: const Color(0xFFF2F3F5),
-          body: Stack(
-            children: [
-              const WatermarkTiledSmall(tileScale: 25.0),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF2F3F5),
+      body: Stack(
+        children: [
+          const WatermarkTiledSmall(tileScale: 25.0),
 
-              SafeArea(
-                child: Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: size.width < 380 ? 16 : 22,
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: BackdropFilter(
-                        filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.10),
-                            borderRadius: BorderRadius.circular(28),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.10),
-                              width: 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
-                                blurRadius: 18,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
+          SafeArea(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: size.width < 380 ? 16 : 22,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.10),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 18,
+                            offset: const Offset(0, 10),
                           ),
-                          child: SingleChildScrollView(
-                            controller: _scrollCtrl, // attach controller
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                tab == 1
-                                    ? const SizedBox(height: 150)
-                                    : const SizedBox.shrink(),
+                        ],
+                      ),
+                      child: SingleChildScrollView(
+                        controller: _scrollCtrl, // attach controller
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            tab == 1
+                                ? const SizedBox(height: 150)
+                                : const SizedBox.shrink(),
 
-                                _AuthToggle(
-                                  activeIndex: tab,
-                                  onChanged: (i) {
-                                    _loginFormKey.currentState?.reset();
-                                    _signupFormKey.currentState?.reset();
+                            _AuthToggle(
+                              activeIndex: tab,
+                              onChanged: (i) {
+                                _loginFormKey.currentState?.reset();
+                                _signupFormKey.currentState?.reset();
 
-                                    // reset scroll + logo position when toggling tabs
-                                    if (_scrollCtrl.hasClients) {
-                                      _scrollCtrl.jumpTo(0);
-                                    }
-                                    setState(() {
-                                      tab = i;
-                                      _scrollY = 0;
-                                    });
-                                  },
-                                ),
-                                const SizedBox(height: 18),
+                                // reset scroll + logo position when toggling tabs
+                                if (_scrollCtrl.hasClients) {
+                                  _scrollCtrl.jumpTo(0);
+                                }
+                                setState(() {
+                                  tab = i;
+                                  _scrollY = 0;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 18),
 
-                                // ---------------- LOGIN FORM ----------------
-                                if (tab == 0)
-                                  Form(
-                                    key: _loginFormKey,
-                                    autovalidateMode: AutovalidateMode.disabled,
-                                    child: Column(
+                            // ---------------- LOGIN FORM ----------------
+                            if (tab == 0)
+                              Form(
+                                key: _loginFormKey,
+                                autovalidateMode: AutovalidateMode.disabled,
+                                child: Column(
+                                  children: [
+                                    _InputCard(
+                                      fieldKey: const ValueKey('login_email'),
+                                      hint: 'Email',
+                                      icon: 'assets/email_icon.png',
+                                      controller: _loginEmailCtrl,
+                                      keyboardType: TextInputType.emailAddress,
+                                      validator: _validateLoginEmail,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _InputCard(
+                                      fieldKey: const ValueKey(
+                                        'login_password',
+                                      ),
+                                      hint: 'Password',
+                                      icon: 'assets/password_icon.png',
+                                      controller: _loginPassCtrl,
+                                      obscureText: _loginObscure,
+                                      onToggleObscure: () => setState(
+                                        () => _loginObscure = !_loginObscure,
+                                      ),
+                                      validator: _validateLoginPassword,
+                                    ),
+                                    const SizedBox(height: 7),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
                                       children: [
-                                        _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'login_email',
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 8.0,
                                           ),
-                                          hint: 'Email',
-                                          icon: 'assets/email_icon.png',
-                                          controller: _loginEmailCtrl,
-                                          keyboardType:
-                                              TextInputType.emailAddress,
-                                          validator: _validateLoginEmail,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'login_password',
-                                          ),
-                                          hint: 'Password',
-                                          icon: 'assets/password_icon.png',
-                                          controller: _loginPassCtrl,
-                                          obscureText: _loginObscure,
-                                          onToggleObscure: () => setState(
-                                            () =>
-                                                _loginObscure = !_loginObscure,
-                                          ),
-                                          validator: _validateLoginPassword,
-                                        ),
-                                        const SizedBox(height: 7),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                left: 8.0,
-                                              ),
-                                              child: TextButton(
-                                                onPressed: () {},
-                                                child: const Text(
-                                                  'Forgot password',
-                                                  style: TextStyle(
-                                                    fontFamily: 'ClashGrotesk',
-                                                    fontSize: 14.5,
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                                ),
+                                          child: TextButton(
+                                            onPressed: () {},
+                                            child: const Text(
+                                              'Forgot password',
+                                              style: TextStyle(
+                                                fontFamily: 'ClashGrotesk',
+                                                fontSize: 14.5,
+                                                fontWeight: FontWeight.w700,
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                        SizedBox(
-                                          width: 160,
-                                          height: 40,
-                                          child: _PrimaryGradientButton(
-                                            text: 'LOGIN',
-                                            onPressed:  _submit,
-                                          //  loading: loginLoading,
                                           ),
-                                        ),
-                                        const SizedBox(height: 18),
-                                        _FooterSwitch(
-                                          prompt: "Don’t have an account? ",
-                                          action: "Create an account",
-                                          onTap: () => setState(() {
-                                            if (_scrollCtrl.hasClients) {
-                                              _scrollCtrl.jumpTo(0);
-                                            }
-                                            tab = 1;
-                                            _scrollY = 0;
-                                          }),
                                         ),
                                       ],
                                     ),
-                                  ),
+                                    SizedBox(
+                                      width: 160,
+                                      height: 40,
+                                      child: _PrimaryGradientButton(
+                                        text: 'LOGIN',
+                                        onPressed: _submit,
+                                        //  loading: loginLoading,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 18),
+                                    _FooterSwitch(
+                                      prompt: "Don’t have an account? ",
+                                      action: "Create an account",
+                                      onTap: () => setState(() {
+                                        if (_scrollCtrl.hasClients) {
+                                          _scrollCtrl.jumpTo(0);
+                                        }
+                                        tab = 1;
+                                        _scrollY = 0;
+                                      }),
+                                    ),
+                                  ],
+                                ),
+                              ),
 
-                                // ---------------- SIGNUP FORM ----------------
-                                if (tab == 1)
-                                  Form(
-                                    key: _signupFormKey,
-                                    autovalidateMode: AutovalidateMode.disabled,
-                                    child: Column(
-                                      children: [
-                                        _InputCard(
-                                          fieldKey: const ValueKey('emp_code'),
-                                          hint: 'Employee Code',
-                                          icon: 'assets/name_icon.png',
-                                          controller: _empCodeCtrl,
-                                          validator: _req,
-                                        ),
-                                        const SizedBox(height: 12),
+                            // ---------------- SIGNUP FORM ----------------
+                            if (tab == 1)
+                              Form(
+                                key: _signupFormKey,
+                                autovalidateMode: AutovalidateMode.disabled,
+                                child: Column(
+                                  children: [
+                                    _InputCard(
+                                      fieldKey: const ValueKey('emp_code'),
+                                      hint: 'Employee Code',
+                                      icon: 'assets/name_icon.png',
+                                      controller: _empCodeCtrl,
+                                      validator: _req,
+                                    ),
+                                    const SizedBox(height: 12),
 
-                                        _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'signup_name',
-                                          ),
-                                          hint: 'Employee Name',
-                                          icon: 'assets/name_icon.png',
-                                          controller: _nameCtrl,
-                                          validator: _validateName,
-                                        ),
-                                        const SizedBox(height: 12),
+                                    _InputCard(
+                                      fieldKey: const ValueKey('signup_name'),
+                                      hint: 'Employee Name',
+                                      icon: 'assets/name_icon.png',
+                                      controller: _nameCtrl,
+                                      validator: _validateName,
+                                    ),
+                                    const SizedBox(height: 12),
 
-                                        _CnicField(
-                                          controller: _cnicCtrl,
-                                          validator: _cnic,
-                                        ),
-                                        const SizedBox(height: 12),
+                                    _CnicField(
+                                      controller: _cnicCtrl,
+                                      validator: _cnic,
+                                    ),
+                                    const SizedBox(height: 12),
 
-                                        _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'signup_address',
-                                          ),
-                                          hint: 'Employee Address',
-                                          icon: 'assets/name_icon.png',
-                                          controller: _addressCtrl,
-                                          validator: _req,
-                                        ),
-                                        const SizedBox(height: 12),
+                                    _InputCard(
+                                      fieldKey: const ValueKey(
+                                        'signup_address',
+                                      ),
+                                      hint: 'Employee Address',
+                                      icon: 'assets/name_icon.png',
+                                      controller: _addressCtrl,
+                                      validator: _req,
+                                    ),
+                                    const SizedBox(height: 12),
 
-                                        _PkMobileField(
-                                          hint: 'Employee Mobile 1',
-                                          controller: _mob1Ctrl,
-                                          validator: _pkMobile,
-                                        ),
-                                        const SizedBox(height: 12),
+                                    _PkMobileField(
+                                      hint: 'Employee Mobile 1',
+                                      controller: _mob1Ctrl,
+                                      validator: _pkMobile,
+                                    ),
+                                    const SizedBox(height: 12),
 
-                                        _PkMobileField(
-                                          hint: 'Employee Mobile 2',
-                                          controller: _mob2Ctrl,
-                                          validator: (v) =>
-                                              _pkMobile(v, required: false),
-                                        ),
-                                        const SizedBox(height: 12),
+                                    _PkMobileField(
+                                      hint: 'Employee Mobile 2',
+                                      controller: _mob2Ctrl,
+                                      validator: (v) =>
+                                          _pkMobile(v, required: false),
+                                    ),
+                                    const SizedBox(height: 12),
 
-                                        _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'signup_email',
-                                          ),
-                                          hint: 'Employee Email',
-                                          icon: 'assets/email_icon.png',
-                                          controller: _signupEmailCtrl,
-                                          keyboardType:
-                                              TextInputType.emailAddress,
-                                          validator: _validateSignupEmail,
-                                        ),
-                                        const SizedBox(height: 12),
+                                    _InputCard(
+                                      fieldKey: const ValueKey('signup_email'),
+                                      hint: 'Employee Email',
+                                      icon: 'assets/email_icon.png',
+                                      controller: _signupEmailCtrl,
+                                      keyboardType: TextInputType.emailAddress,
+                                      validator: _validateSignupEmail,
+                                    ),
+                                    const SizedBox(height: 12),
 
-                                        _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'signup_password',
-                                          ),
-                                          hint: 'Employee Password',
-                                          icon: 'assets/password_icon.png',
-                                          controller: _signupPassCtrl,
-                                          obscureText: _signupObscure,
-                                          onToggleObscure: () => setState(
-                                            () => _signupObscure =
-                                                !_signupObscure,
-                                          ),
-                                          validator: _validateSignupPassword,
-                                        ),
-                                        const SizedBox(height: 12),
+                                    _InputCard(
+                                      fieldKey: const ValueKey(
+                                        'signup_password',
+                                      ),
+                                      hint: 'Employee Password',
+                                      icon: 'assets/password_icon.png',
+                                      controller: _signupPassCtrl,
+                                      obscureText: _signupObscure,
+                                      onToggleObscure: () => setState(
+                                        () => _signupObscure = !_signupObscure,
+                                      ),
+                                      validator: _validateSignupPassword,
+                                    ),
+                                    const SizedBox(height: 12),
 
-                                        _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'signup_distribution',
-                                          ),
-                                          hint: 'Distribution Name',
-                                          icon: 'assets/name_icon.png',
-                                          controller: _distCtrl,
-                                          validator: _req,
-                                        ),
-                                        const SizedBox(height: 12),
+                                    _InputCard(
+                                      fieldKey: const ValueKey(
+                                        'signup_distribution',
+                                      ),
+                                      hint: 'Distribution Name',
+                                      icon: 'assets/name_icon.png',
+                                      controller: _distCtrl,
+                                      validator: _req,
+                                    ),
+                                    const SizedBox(height: 12),
 
-                                        _InputCard(
-                                          fieldKey: const ValueKey(
-                                            'signup_territory',
-                                          ),
-                                          hint: 'Territory',
-                                          icon: 'assets/name_icon.png',
-                                          controller: _territoryCtrl,
-                                          validator: _req,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        // --- Modern Channel Type dropdown (drop-in replacement) ---
-                                        Container(
-                                          height: 56,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              16,
+                                    _InputCard(
+                                      fieldKey: const ValueKey(
+                                        'signup_territory',
+                                      ),
+                                      hint: 'Territory',
+                                      icon: 'assets/name_icon.png',
+                                      controller: _territoryCtrl,
+                                      validator: _req,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    // --- Modern Channel Type dropdown (drop-in replacement) ---
+                                    Container(
+                                      height: 56,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.06,
                                             ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withOpacity(
-                                                  0.06,
-                                                ),
-                                                blurRadius: 12,
-                                                offset: const Offset(0, 6),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 6),
+                                          ),
+                                        ],
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          // Optional leading icon (keeps visual consistency with other fields)
+                                          Container(
+                                            height: 32,
+                                            width: 32,
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF2F3F5),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: const Icon(
+                                              Icons
+                                                  .store_mall_directory_rounded,
+                                              size: 18,
+                                              color: Color(0xFF1B1B1B),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+
+                                          // The dropdown
+                                          Expanded(
+                                            child: DropdownButtonFormField<String>(
+                                              value: _channelType,
+                                              isExpanded: true,
+                                              alignment: Alignment
+                                                  .centerLeft, // ← perfect left align
+                                              style: const TextStyle(
+                                                // ← selected text style
+                                                fontFamily: 'ClashGrotesk',
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.black,
+                                                letterSpacing: 0.3,
                                               ),
-                                            ],
-                                          ),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              // Optional leading icon (keeps visual consistency with other fields)
-                                              Container(
-                                                height: 32,
-                                                width: 32,
+                                              decoration: const InputDecoration(
+                                                border: InputBorder.none,
+                                                isCollapsed:
+                                                    true, // ← centers text vertically in 56h
+                                                contentPadding: EdgeInsets
+                                                    .zero, // ← no extra inset
+                                                hintText: 'Select Channel Type',
+                                                hintStyle: TextStyle(
+                                                  fontFamily: 'ClashGrotesk',
+                                                  color: Colors.black54,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                  letterSpacing: 0.3,
+                                                ),
+                                              ),
+                                              icon: Container(
+                                                // ← modern chevron pill
+                                                height: 87,
+                                                width: 34,
                                                 alignment: Alignment.center,
                                                 decoration: BoxDecoration(
                                                   color: const Color(
-                                                    0xFFF2F3F5,
+                                                    0xFFEDE7FF,
                                                   ),
                                                   borderRadius:
-                                                      BorderRadius.circular(10),
+                                                      BorderRadius.circular(12),
                                                 ),
                                                 child: const Icon(
-                                                  Icons
-                                                      .store_mall_directory_rounded,
-                                                  size: 18,
-                                                  color: Color(0xFF1B1B1B),
+                                                  Icons.expand_more_rounded,
+                                                  size: 20,
+                                                  color: Color(0xFF7F53FD),
                                                 ),
                                               ),
-                                              const SizedBox(width: 10),
-
-                                              // The dropdown
-                                              Expanded(
-                                                child: DropdownButtonFormField<String>(
-                                                  value: _channelType,
-                                                  isExpanded: true,
-                                                  alignment: Alignment
-                                                      .centerLeft, // ← perfect left align
-                                                  style: const TextStyle(
-                                                    // ← selected text style
-                                                    fontFamily: 'ClashGrotesk',
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.black,
-                                                    letterSpacing: 0.3,
-                                                  ),
-                                                  decoration: const InputDecoration(
-                                                    border: InputBorder.none,
-                                                    isCollapsed:
-                                                        true, // ← centers text vertically in 56h
-                                                    contentPadding: EdgeInsets
-                                                        .zero, // ← no extra inset
-                                                    hintText:
-                                                        'Select Channel Type',
-                                                    hintStyle: TextStyle(
-                                                      fontFamily:
-                                                          'ClashGrotesk',
-                                                      color: Colors.black54,
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      letterSpacing: 0.3,
-                                                    ),
-                                                  ),
-                                                  icon: Container(
-                                                    // ← modern chevron pill
-                                                    height: 87,
-                                                    width: 34,
-                                                    alignment: Alignment.center,
-                                                    decoration: BoxDecoration(
-                                                      color: const Color(
-                                                        0xFFEDE7FF,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            12,
-                                                          ),
-                                                    ),
-                                                    child: const Icon(
-                                                      Icons.expand_more_rounded,
-                                                      size: 20,
-                                                      color: Color(0xFF7F53FD),
-                                                    ),
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        14,
-                                                      ), // ← rounded popup menu
-                                                  dropdownColor: Colors.white,
-                                                  menuMaxHeight: 320,
-                                                  items:
-                                                      const [
-                                                            'GT',
-                                                            'LMT',
-                                                            'IMT',
-                                                            'OOH',
-                                                            'HORECA',
-                                                            'BS',
-                                                            'N/A',
-                                                          ]
-                                                          .map(
-                                                            (
-                                                              e,
-                                                            ) => DropdownMenuItem<String>(
-                                                              value: e,
-                                                              alignment: Alignment
-                                                                  .centerLeft,
-                                                              child: Padding(
-                                                                // tidy vertical rhythm inside the menu
-                                                                padding:
-                                                                    const EdgeInsets.symmetric(
-                                                                      vertical:
-                                                                          3,
-                                                                    ),
-                                                                child: Text(
-                                                                  e,
-                                                                  style: const TextStyle(
-                                                                    fontFamily:
-                                                                        'ClashGrotesk',
-                                                                    fontSize:
-                                                                        14,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600,
-                                                                    letterSpacing:
-                                                                        0.3,
-                                                                    color: Colors
-                                                                        .black,
-                                                                  ),
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    14,
+                                                  ), // ← rounded popup menu
+                                              dropdownColor: Colors.white,
+                                              menuMaxHeight: 320,
+                                              items:
+                                                  const [
+                                                        'GT',
+                                                        'LMT',
+                                                        'IMT',
+                                                        'OOH',
+                                                        'HORECA',
+                                                        'BS',
+                                                        'N/A',
+                                                      ]
+                                                      .map(
+                                                        (
+                                                          e,
+                                                        ) => DropdownMenuItem<String>(
+                                                          value: e,
+                                                          alignment: Alignment
+                                                              .centerLeft,
+                                                          child: Padding(
+                                                            // tidy vertical rhythm inside the menu
+                                                            padding:
+                                                                const EdgeInsets.symmetric(
+                                                                  vertical: 3,
                                                                 ),
+                                                            child: Text(
+                                                              e,
+                                                              style: const TextStyle(
+                                                                fontFamily:
+                                                                    'ClashGrotesk',
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                letterSpacing:
+                                                                    0.3,
+                                                                color: Colors
+                                                                    .black,
                                                               ),
                                                             ),
-                                                          )
-                                                          .toList(),
-                                                  onChanged: (v) => setState(
-                                                    () => _channelType = v,
-                                                  ),
-                                                  validator: (v) => v == null
-                                                      ? 'Please select'
-                                                      : null,
-                                                ),
+                                                          ),
+                                                        ),
+                                                      )
+                                                      .toList(),
+                                              onChanged: (v) => setState(
+                                                () => _channelType = v,
                                               ),
-                                            ],
+                                              validator: (v) => v == null
+                                                  ? 'Please select'
+                                                  : null,
+                                            ),
                                           ),
-                                        ),
-
-                                        const SizedBox(height: 20),
-
-                                        SizedBox(
-                                          width: 160,
-                                          height: 40,
-                                          child: _PrimaryGradientButton(
-                                            text: 'SIGNUP',
-                                            onPressed: _submit,
-                                          //  loading: signupLoading,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 18),
-
-                                        _FooterSwitch(
-                                          prompt: "Already have an account? ",
-                                          action: "Login",
-                                          onTap: () => setState(() {
-                                            if (_scrollCtrl.hasClients) {
-                                              _scrollCtrl.jumpTo(0);
-                                            }
-                                            tab = 0;
-                                            _scrollY = 0;
-                                          }),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                              ],
-                            ),
-                          ),
+
+                                    const SizedBox(height: 20),
+
+                                    SizedBox(
+                                      width: 160,
+                                      height: 40,
+                                      child: _PrimaryGradientButton(
+                                        text: 'SIGNUP',
+                                        onPressed: _submit,
+                                        //  loading: signupLoading,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 18),
+
+                                    _FooterSwitch(
+                                      prompt: "Already have an account? ",
+                                      action: "Login",
+                                      onTap: () => setState(() {
+                                        if (_scrollCtrl.hasClients) {
+                                          _scrollCtrl.jumpTo(0);
+                                        }
+                                        tab = 0;
+                                        _scrollY = 0;
+                                      }),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
+            ),
+          ),
 
-              // Logo: scrolls with SignUp, fixed on Login
-              Positioned(
-                top: logoTop,
-                left: 57,
-                right: 0,
-                child: IgnorePointer(
-                  child: Center(
-                    child: Image.asset(
-                      "assets/logo_ams.png",
-                      height: 270,
-                      width: 270,
-                    ),
-                  ),
+          Positioned(
+            top: logoTop,
+            left: 57,
+            right: 0,
+            child: IgnorePointer(
+              child: Center(
+                child: Image.asset(
+                  "assets/logo_ams.png",
+                  height: 270,
+                  width: 270,
                 ),
               ),
-            ],
+            ),
           ),
-        );
+        ],
+      ),
+    );
   }
 }
 
