@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
 import 'package:new_amst_flutter/Data/token_store.dart';
 import 'package:new_amst_flutter/Screens/auth_screen.dart';
+import 'package:new_amst_flutter/Screens/request_leave.dart';
 
 
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
-  // COLORS (matched to your design)
   static const _bg = Color(0xFFF6F7FB);
   static const _title = Color(0xFF111111);
   static const _sub = Color(0xFF7D8790);
@@ -23,7 +21,6 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Reference width like iPhone (390 logical points)
     final s = MediaQuery.of(context).size.width / 390.0;
 
     return Scaffold(
@@ -32,13 +29,11 @@ class ProfilePage extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.fromLTRB(16 * s, 10 * s, 16 * s, 24 * s),
           children: [
-            // ===== Header (back + centered title)
             SizedBox(
               height: 44 * s,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-             
                   Text(
                     'Profile',
                     style: TextStyle(
@@ -53,11 +48,9 @@ class ProfilePage extends StatelessWidget {
             ),
             SizedBox(height: 14 * s),
 
-            // ===== Top: Avatar + Name + Edit Profile
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Avatar with subtle rim + camera badge
                 SizedBox(
                   width: 96 * s,
                   height: 96 * s,
@@ -85,7 +78,6 @@ class ProfilePage extends StatelessWidget {
                           padding: EdgeInsets.all(3 * s),
                           child: ClipOval(
                             child: Image.asset(
-                              // <<< replace with your asset path
                               'assets/avatar.png',
                               fit: BoxFit.cover,
                               width: 90 * s,
@@ -185,6 +177,7 @@ class ProfilePage extends StatelessWidget {
             SizedBox(height: 18 * s),
             _dividerLine(s),
 
+
             // ===== Menu rows (exact labels as in design)
             // _menuRow(
             //   s: s,
@@ -192,10 +185,15 @@ class ProfilePage extends StatelessWidget {
             //   label: 'Sponsored vendors',
             // ),
            // _dividerLine(s),
-            _menuRow(
-              s: s,
-              icon: Icons.receipt_long_outlined,
-              label: 'Recent Report',
+            InkWell(
+              onTap: (){
+                Navigator.push(context, MaterialPageRoute(builder: (context)=> LeaveTypeDebugPage()));
+              },
+              child: _menuRow(
+                s: s,
+                icon: Icons.receipt_long_outlined,
+                label: 'Recent Report',
+              ),
             ),
             _dividerLine(s),
             _menuRow(

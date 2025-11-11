@@ -1,13 +1,6 @@
-// main.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
-import 'package:new_amst_flutter/Bloc/auth_event.dart';
-import 'package:new_amst_flutter/Screens/location_google_maos.dart';
-import 'package:new_amst_flutter/Screens/mark_attendance.dart' show MarkAttendanceView;
-import 'package:new_amst_flutter/Screens/report_history_screen.dart';
-import 'package:new_amst_flutter/Screens/scanner_screen.dart';
+import 'package:new_amst_flutter/Screens/mark_attendance.dart'
+    show MarkAttendanceView;
 
 const kBg = Color(0xFFF6F7FA);
 const kTxtDim = Color(0xFF6A6F7B);
@@ -28,31 +21,15 @@ const kCardCarGrad = LinearGradient(
   end: Alignment.bottomRight,
 );
 
-
-class InspectionHomePixelPerfect extends StatelessWidget {
-  const InspectionHomePixelPerfect({super.key});
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
 
   static const _bg = Color(0xFFF6F7FA);
-  static const _txtDim = Color(0xFF6A6F7B);
-  static const _txtDark = Color(0xFF1F2937);
-  static const _searchBg = Color(0xFFF0F2F5);
-  static const _iconMuted = Color(0xFF9CA3AF);
-  static const _bikeText = Color(0xFF444B59);
-
-  static const _gradBluePurple = LinearGradient(
-    colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-  );
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    const baseW = 393.0; // iPhone 14/15 base
+    const baseW = 393.0;
     final s = size.width / baseW;
 
     return Scaffold(
@@ -65,23 +42,20 @@ class InspectionHomePixelPerfect extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                    SizedBox(height: 6 * s),
+                  SizedBox(height: 6 * s),
                   _Header(s: s),
                   SizedBox(height: 16 * s),
                   _SearchBar(s: s),
                   SizedBox(height: 25 * s),
-                  _CarCard(s: s),
+                  MarkAttendanceWidget(s: s),
                   SizedBox(height: 30 * s),
                   InkWell(
-                    onTap: (){
-                
-                    },
-                    child: _BikeCard(s: s)),
+                    onTap: () {},
+                    child: SalesWidget(s: s),
+                  ),
                 ],
               ),
             ),
-
-        
           ],
         ),
       ),
@@ -89,7 +63,6 @@ class InspectionHomePixelPerfect extends StatelessWidget {
   }
 }
 
-/* ------------------------ Header ------------------------ */
 class _Header extends StatelessWidget {
   const _Header({required this.s});
   final double s;
@@ -108,18 +81,21 @@ class _Header extends StatelessWidget {
                 height: 1.2,
               ),
               children: [
-                 TextSpan(text: 'Good morning,\n',   style: TextStyle(
-                      fontFamily: 'ClashGrotesk',
-                      fontSize: 18 * s,
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
-                      letterSpacing: 0.1 * s,
-                    ),),
+                TextSpan(
+                  text: 'Good morning,\n',
+                  style: TextStyle(
+                    fontFamily: 'ClashGrotesk',
+                    fontSize: 18 * s,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                    letterSpacing: 0.1 * s,
+                  ),
+                ),
                 WidgetSpan(
                   alignment: PlaceholderAlignment.baseline,
                   baseline: TextBaseline.alphabetic,
                   child: _GradientText(
-                  "Test User", 
+                    "Test User",
                     gradient: const LinearGradient(
                       colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
                       begin: Alignment.centerLeft,
@@ -198,16 +174,15 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-/* ------------------------ Car Card ------------------------ */
-class _CarCard extends StatelessWidget {
-  const _CarCard({required this.s});
+class MarkAttendanceWidget extends StatelessWidget {
+  const MarkAttendanceWidget({required this.s});
   final double s;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 219 * s,
-      width: MediaQuery.of(context).size.width*0.90,
+      width: MediaQuery.of(context).size.width * 0.90,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF1CC8FF), Color(0xFF6B63FF)],
@@ -227,7 +202,7 @@ class _CarCard extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-              right: -29 * s,
+            right: -29 * s,
             top: 18 * s,
             // right: -25 * s,
             // top: -10 * s,
@@ -257,7 +232,7 @@ class _CarCard extends StatelessWidget {
                 ),
                 SizedBox(height: 6 * s),
                 Text(
-                 'Make sure GPS is on and\nyou’re at the job site.',
+                  'Make sure GPS is on and\nyou’re at the job site.',
                   style: TextStyle(
                     fontFamily: 'ClashGrotesk',
                     color: Colors.white.withOpacity(0.95),
@@ -266,22 +241,20 @@ class _CarCard extends StatelessWidget {
                     height: 1.25,
                   ),
                 ),
-                SizedBox(height: 34,),
+                SizedBox(height: 34),
                 InkWell(
-                  onTap: (){
-    Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute(
-        builder: (_) => const MarkAttendanceView(),
-        fullscreenDialog: true, // optional; nice iOS-style sheet
-      ),
-    );
-                  //  Navigator.push(context, MaterialPageRoute(builder: (context)=> MarkAttendanceView()));
-
+                  onTap: () {
+                    Navigator.of(context, rootNavigator: true).push(
+                      MaterialPageRoute(
+                        builder: (_) => const MarkAttendanceView(),
+                        fullscreenDialog: true,
+                      ),
+                    );
                   },
                   child: _ChipButtonWhite(
                     s: s,
                     icon: 'assets/attendance_icons.png',
-                    label: 'Mark Attendance', // matches the mock text
+                    label: 'Mark Attendance',
                   ),
                 ),
               ],
@@ -293,15 +266,15 @@ class _CarCard extends StatelessWidget {
   }
 }
 
-class _BikeCard extends StatelessWidget {
-  const _BikeCard({required this.s});
+class SalesWidget extends StatelessWidget {
+  const SalesWidget({required this.s});
   final double s;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-         height: 219 * s,
-      width: MediaQuery.of(context).size.width*0.90,
+      height: 219 * s,
+      width: MediaQuery.of(context).size.width * 0.90,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(9 * s),
@@ -317,15 +290,14 @@ class _BikeCard extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-          right: -29 * s,
+            right: -29 * s,
             top: 18 * s,
             child: SizedBox(
-                     width: 205 * s,
+              width: 205 * s,
               height: 210 * s,
               child: Image.asset(
                 'assets/new_sales-removebg-preview.png',
                 fit: BoxFit.contain,
-      
               ),
             ),
           ),
@@ -343,10 +315,9 @@ class _BikeCard extends StatelessWidget {
                   ),
                   style: TextStyle(
                     fontFamily: 'ClashGrotesk',
-                          fontSize: 29 * s,
+                    fontSize: 29 * s,
                     fontWeight: FontWeight.w900,
                     height: 1.05,
-                    
                   ),
                 ),
                 SizedBox(height: 6 * s),
@@ -355,17 +326,13 @@ class _BikeCard extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'ClashGrotesk',
                     color: Color(0xFF444B59),
-                         fontSize: 16.5 * s,
+                    fontSize: 16.5 * s,
                     fontWeight: FontWeight.w600,
                     height: 1.25,
                   ),
                 ),
                 const Spacer(),
-                _ChipButtonGradient(
-                  s: s,
-
-                  label: 'Enter your Sales', // matches the mock text
-                ),
+                _ChipButtonGradient(s: s, label: 'Enter your Sales'),
               ],
             ),
           ),
@@ -375,9 +342,12 @@ class _BikeCard extends StatelessWidget {
   }
 }
 
-/* ------------------------ Chip Buttons ------------------------ */
 class _ChipButtonWhite extends StatelessWidget {
-  const _ChipButtonWhite({required this.s, required this.icon, required this.label});
+  const _ChipButtonWhite({
+    required this.s,
+    required this.icon,
+    required this.label,
+  });
   final double s;
   final String icon;
   final String label;
@@ -401,7 +371,7 @@ class _ChipButtonWhite extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-        Image.asset(icon,height: 22 * s,width: 22 * s), 
+          Image.asset(icon, height: 22 * s, width: 22 * s),
           SizedBox(width: 8 * s),
           Text(
             label,
@@ -426,7 +396,7 @@ class _ChipButtonGradient extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-     height: 40 * s,
+      height: 40 * s,
       padding: EdgeInsets.symmetric(horizontal: 12 * s),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -444,14 +414,18 @@ class _ChipButtonGradient extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-                  Image.asset('assets/sales_button_icon.png',height: 22 * s,width: 22 * s),
-        //  Icon(icon, color: Colors.white, size: 18 * s),
+          Image.asset(
+            'assets/sales_button_icon.png',
+            height: 22 * s,
+            width: 22 * s,
+          ),
+
           SizedBox(width: 8 * s),
           Text(
             label,
             style: TextStyle(
               fontFamily: 'ClashGrotesk',
-            color: Colors.white,
+              color: Colors.white,
               fontSize: 16 * s,
               fontWeight: FontWeight.w800,
             ),
@@ -462,10 +436,8 @@ class _ChipButtonGradient extends StatelessWidget {
   }
 }
 
-
-
 class _GradientText extends StatelessWidget {
-  const _GradientText(this.text, {required this.gradient, required this.style, super.key});
+  const _GradientText(this.text, {required this.gradient, required this.style});
   final String text;
   final Gradient gradient;
   final TextStyle style;

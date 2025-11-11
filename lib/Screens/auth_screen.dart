@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
 import 'package:new_amst_flutter/Bloc/auth_event.dart';
 import 'package:new_amst_flutter/Bloc/auth_state.dart';
+import 'package:new_amst_flutter/Screens/app_shell.dart';
+import 'package:new_amst_flutter/Screens/home_screen.dart';
 import 'package:new_amst_flutter/Screens/splash_screen.dart';
 import 'package:new_amst_flutter/Widgets/watermarked_widget.dart';
 import 'dart:ui' as ui;
@@ -141,36 +143,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   // ---------------- Submit ----------------
   void _submit() {
-    final bloc = context.read<AuthBloc>();
-
-    if (tab == 0) {
-      if (!_loginFormKey.currentState!.validate()) return;
-      bloc.add(
-        LoginRequested(
-          email: _loginEmailCtrl.text.trim(),
-          password: _loginPassCtrl.text,
-        ),
-      );
-    } else {
-      if (!_signupFormKey.currentState!.validate()) return;
-
-      final full = _nameCtrl.text.trim();
-      String first = full, last = '';
-      final sp = full.split(RegExp(r'\s+'));
-      if (sp.length > 1) {
-        first = sp.first;
-        last = sp.sublist(1).join(' ');
-      }
-
-      bloc.add(
-        SignupRequested(
-          firstName: first,
-          lastName: last,
-          email: _signupEmailCtrl.text.trim(),
-          password: _signupPassCtrl.text,
-        ),
-      );
-    }
+Navigator.push(context, MaterialPageRoute(builder: (context)=> AppShell()));
   }
 
   @override
@@ -182,34 +155,7 @@ class _AuthScreenState extends State<AuthScreen> {
     // Scroll logo only with SignUp; fixed on Login
     final double logoTop = tab == 1 ? (baseTop - _scrollY) : baseTop;
 
-    return BlocConsumer<AuthBloc, AuthState>(
-      listenWhen: (p, c) =>
-          p.loginStatus != c.loginStatus ||
-          p.signupStatus != c.signupStatus ||
-          p.error != c.error,
-      listener: (context, state) {
-        if (state.error != null && state.error!.isNotEmpty) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.error!)));
-        }
-        if (state.loginStatus == AuthStatus.success) {
-          Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const SplashScreen()),
-            (route) => false,
-          );
-        }
-        if (state.signupStatus == AuthStatus.success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Signup successful. Please login.')),
-          );
-        }
-      },
-      builder: (context, state) {
-        final loginLoading = state.loginStatus == AuthStatus.loading;
-        final signupLoading = state.signupStatus == AuthStatus.loading;
-
-        return Scaffold(
+    return   Scaffold(
           backgroundColor: const Color(0xFFF2F3F5),
           body: Stack(
             children: [
@@ -330,13 +276,9 @@ class _AuthScreenState extends State<AuthScreen> {
                                           width: 160,
                                           height: 40,
                                           child: _PrimaryGradientButton(
-                                            text: loginLoading
-                                                ? 'Please wait...'
-                                                : 'LOGIN',
-                                            onPressed: loginLoading
-                                                ? null
-                                                : _submit,
-                                            loading: loginLoading,
+                                            text: 'LOGIN',
+                                            onPressed:  _submit,
+                                          //  loading: loginLoading,
                                           ),
                                         ),
                                         const SizedBox(height: 18),
@@ -623,68 +565,15 @@ class _AuthScreenState extends State<AuthScreen> {
                                           ),
                                         ),
 
-                                        // Dropdown (Select Channel Type) want to redesigned this dropdown in more modern and smart
-                                        // Container(
-                                        //   height: 56,
-                                        //   decoration: BoxDecoration(
-                                        //     color: Colors.white,
-                                        //     borderRadius: BorderRadius.circular(16),
-                                        //     boxShadow: [
-                                        //       BoxShadow(
-                                        //         color: Colors.black.withOpacity(0.06),
-                                        //         blurRadius: 12,
-                                        //         offset: const Offset(0, 6),
-                                        //       ),
-                                        //     ],
-                                        //   ),
-                                        //   padding: const EdgeInsets.symmetric(horizontal: 12),
-                                        //   child: DropdownButtonFormField<String>(
-                                        //     value: _channelType,
-                                        //     isExpanded: true,
-                                        //     decoration: const InputDecoration(
-                                        //       border: InputBorder.none,
-                                        //       hintText: 'Select Channel Type',
-                                        //       isCollapsed: true,
-                                        //       hintStyle: TextStyle(
-                                        //         fontFamily: 'ClashGrotesk',
-                                        //         color: Colors.black54,
-                                        //         fontSize: 16,
-                                        //         fontWeight: FontWeight.w600,
-                                        //       ),
-                                        //     ),
-                                        //     icon: const Icon(Icons.arrow_drop_down),
-                                        //     items: const [
-                                        //       'GT','LMT','IMT','OOH','HORECA','BS','N/A',
-                                        //     ].map((e) => DropdownMenuItem(
-                                        //       value: e,
-                                        //       child: Align(
-                                        //         alignment: Alignment.centerLeft,
-                                        //         child: Text(
-                                        //           e,
-                                        //           style: const TextStyle(
-                                        //             fontWeight: FontWeight.w600,
-                                        //             letterSpacing: 0.3,
-                                        //           ),
-                                        //         ),
-                                        //       ),
-                                        //     )).toList(),
-                                        //     onChanged: (v) => setState(() => _channelType = v),
-                                        //     validator: (v) => v == null ? 'Please select' : null,
-                                        //   ),
-                                        // ),
                                         const SizedBox(height: 20),
 
                                         SizedBox(
                                           width: 160,
                                           height: 40,
                                           child: _PrimaryGradientButton(
-                                            text: signupLoading
-                                                ? 'Please wait...'
-                                                : 'SIGNUP',
-                                            onPressed: signupLoading
-                                                ? null
-                                                : _submit,
-                                            loading: signupLoading,
+                                            text: 'SIGNUP',
+                                            onPressed: _submit,
+                                          //  loading: signupLoading,
                                           ),
                                         ),
                                         const SizedBox(height: 18),
@@ -731,8 +620,6 @@ class _AuthScreenState extends State<AuthScreen> {
             ],
           ),
         );
-      },
-    );
   }
 }
 
@@ -766,9 +653,9 @@ class _AuthToggle extends StatelessWidget {
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(2),
+              padding: const EdgeInsets.all(0),
               child: AnimatedContainer(
-                height: 48,
+                height: 44,
                 duration: const Duration(milliseconds: 220),
                 decoration: BoxDecoration(
                   gradient: activeIndex == 0 ? _grad : null,
@@ -796,9 +683,9 @@ class _AuthToggle extends StatelessWidget {
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(2),
+              padding: const EdgeInsets.all(0),
               child: AnimatedContainer(
-                height: 48,
+                height: 44,
                 duration: const Duration(milliseconds: 220),
                 decoration: BoxDecoration(
                   gradient: activeIndex == 1 ? _grad : null,

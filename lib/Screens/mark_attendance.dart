@@ -429,7 +429,8 @@ class _MarkAttendanceViewState extends State<MarkAttendanceView> {
                     Center(
                       child: Text(
                         _dateTime,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        style: TextStyle(
+                        
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'ClashGrotesk',
