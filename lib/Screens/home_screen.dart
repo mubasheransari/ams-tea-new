@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:new_amst_flutter/Screens/app_leave_screen.dart';
 import 'package:new_amst_flutter/Screens/mark_attendance.dart'
     show MarkAttendanceView;
 
@@ -53,6 +54,11 @@ class HomeScreen extends StatelessWidget {
                     onTap: () {},
                     child: SalesWidget(s: s),
                   ),
+                       SizedBox(height: 25 * s),
+                  InkWell(
+                    onTap: () {
+                    },
+                    child: ApplyLeaveWidget(s: s))
                 ],
               ),
             ),
@@ -120,7 +126,7 @@ class _Header extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
-            boxShadow: [
+            boxShadow: [ 
               BoxShadow(
                 color: Colors.black.withOpacity(0.06),
                 blurRadius: 8 * s,
@@ -204,8 +210,6 @@ class MarkAttendanceWidget extends StatelessWidget {
           Positioned(
             right: -29 * s,
             top: 18 * s,
-            // right: -25 * s,
-            // top: -10 * s,
             child: SizedBox(
               width: 205 * s,
               height: 210 * s,
@@ -265,6 +269,102 @@ class MarkAttendanceWidget extends StatelessWidget {
     );
   }
 }
+
+
+
+class ApplyLeaveWidget extends StatelessWidget {
+  const ApplyLeaveWidget({required this.s, super.key});
+  final double s;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 219 * s,
+      width: MediaQuery.of(context).size.width * 0.90,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)], // same vibe
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(9 * s),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF7F53FD).withOpacity(0.25),
+            blurRadius: 20 * s,
+            offset: Offset(0, 10 * s),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          // right illustration
+          Positioned(
+            right: -29 * s,
+            top: 18 * s,
+            child: SizedBox(
+              width: 205 * s,
+              height: 210 * s,
+              child: Image.asset(
+                 'assets/new_attendance_icon-removebg-preview.png',
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+          // text + button
+          Padding(
+            padding: EdgeInsets.all(16 * s),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Apply\nLeave',
+                  style: TextStyle(
+                    fontFamily: 'ClashGrotesk',
+                    color: Colors.white,
+                    fontSize: 29 * s,
+                    fontWeight: FontWeight.w900,
+                    height: 1.05,
+                  ),
+                ),
+                SizedBox(height: 6 * s),
+                Text(
+                  'Choose type, dates and\nadd a short reason.',
+                  style: TextStyle(
+                    fontFamily: 'ClashGrotesk',
+                    color: Colors.white.withOpacity(0.95),
+                    fontSize: 16.5 * s,
+                    fontWeight: FontWeight.w600,
+                    height: 1.25,
+                  ),
+                ),
+                SizedBox(height: 34 * s),
+                InkWell(
+                  onTap: () {
+                                     Navigator.of(context, rootNavigator: true).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ApplyLeaveScreen(),
+                        fullscreenDialog: true,
+                      ),
+                    );//   Navigator.push(context, MaterialPageRoute(builder: (context)=> ApplyLeaveScreen()));
+
+                  },
+                  child: _ChipButtonWhite(
+                    s: s,
+                    icon: 'assets/attendance_icons.png',
+                    label: 'Apply Leave',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
 class SalesWidget extends StatelessWidget {
   const SalesWidget({required this.s});
