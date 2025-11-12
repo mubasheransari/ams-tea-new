@@ -146,19 +146,19 @@ class _AuthScreenState extends State<AuthScreen> {
     final repo = Repository();
 
 await repo.registerUser(
-  code: "306232",
-  name: "Mubasher hasnain",
-  cnic: "44204-0100000-2",
-  address: "tttt",
-  mobile1: "03312025765",
-  mobile2: "03113653679",
-  email: "mubashera38@gmail.com",
-  password: "123",
-  distribution: "tester",
-  territory: "karachi",
-  channel: "LMT",
-  latitude: "24.8871885",
-  longitude: "66.9788308",
+  code: _empCodeCtrl.text,
+  name: _nameCtrl.text,
+  cnic:_cnicCtrl.text,
+  address: _addressCtrl.text,
+  mobile1: _mob1Ctrl.text,
+  mobile2: _mob2Ctrl.text,
+  email: _signupEmailCtrl.text,
+  password: _signupPassCtrl.text,
+  distribution: _distCtrl.text,
+  territory: _territoryCtrl.text,
+  channel: _channelType.toString(),
+  latitude: "0",
+  longitude: "0",
   deviceId: "0",
   regToken: "0",
 );
@@ -315,7 +315,6 @@ await repo.registerUser(
                                 ),
                               ),
 
-                            // ---------------- SIGNUP FORM ----------------
                             if (tab == 1)
                               Form(
                                 key: _signupFormKey,
