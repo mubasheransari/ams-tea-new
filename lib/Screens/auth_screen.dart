@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
 import 'package:new_amst_flutter/Bloc/auth_event.dart';
 import 'package:new_amst_flutter/Bloc/auth_state.dart';
+import 'package:new_amst_flutter/Repository/repository.dart';
 import 'package:new_amst_flutter/Screens/app_shell.dart';
 import 'package:new_amst_flutter/Screens/home_screen.dart';
 import 'package:new_amst_flutter/Screens/splash_screen.dart';
@@ -141,12 +142,31 @@ class _AuthScreenState extends State<AuthScreen> {
     return ok ? null : 'Use 03XXXXXXXXX or 92XXXXXXXXXX';
   }
 
-  // ---------------- Submit ----------------
-  void _submit() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => AppShell()),
-    );
+  void _submit()async {
+    final repo = Repository();
+
+await repo.registerUser(
+  code: "306232",
+  name: "Mubasher hasnain",
+  cnic: "44204-0100000-2",
+  address: "tttt",
+  mobile1: "03312025765",
+  mobile2: "03113653679",
+  email: "mubashera38@gmail.com",
+  password: "123",
+  distribution: "tester",
+  territory: "karachi",
+  channel: "LMT",
+  latitude: "24.8871885",
+  longitude: "66.9788308",
+  deviceId: "0",
+  regToken: "0",
+);
+
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(builder: (context) => AppShell()),
+    // );
   }
 
   @override
