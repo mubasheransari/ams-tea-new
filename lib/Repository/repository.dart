@@ -6,6 +6,67 @@ import 'package:new_amst_flutter/Model/getLeaveType.dart';
 import 'dart:io' show Platform;
 
 class Repository {
+
+  final registerUrl = "http://teaapis.mezangrp.com/amstea/index.php?route=api/user/signup";
+
+Future<http.Response> registerUser({
+    required String code,
+    required String name,
+    required String cnic,
+    required String address,
+    required String mobile1,
+    required String mobile2,
+    required String email,
+    required String password,
+    required String distribution,
+    required String territory,
+    required String channel,
+    required String latitude,
+    required String longitude,
+    required String deviceId,
+    required String regToken,
+  }) async {
+    final payload = <String, dynamic>{
+      "code": code,
+      "name": name,
+      "cnic": cnic,
+      "address": address,
+      "mobile1": mobile1,
+      "mobile2": mobile2,
+      "email": email,
+      "password": password,
+      "distribution": distribution,
+      "territory": territory,
+      "channel": channel,
+      "latitude": 0,
+      "longitude": 0,
+      "deviceid": deviceId,
+      "regtoken": 0,
+    };
+
+    final formBody = {"request": jsonEncode(payload)};
+
+    final res = await http
+        .post(Uri.parse(registerUrl), headers: _formHeaders, body: formBody)
+        .timeout(const Duration(seconds: 30));
+
+    if (res.statusCode == 200) {
+      print("STATUS CODE 200");
+      print("STATUS CODE 200");
+      print("STATUS CODE 200");
+      print("STATUS CODE 200");
+      print("STATUS CODE 200");
+      print("STATUS CODE 200");
+      print("STATUS CODE 200");
+      print("STATUS CODE 200");
+  
+    }
+
+    debugPrint("⬅️ /register ${res.statusCode}: ${res.body}");
+    return res;
+  }
+
+  
   // Toggle these depending on where your PHP server is running
   static const String _lanHost = '192.168.1.73'; // physical device target
   static const String _androidEmuHost = '10.0.2.2'; // Android emulator → host

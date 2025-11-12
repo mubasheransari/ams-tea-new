@@ -113,7 +113,6 @@ class _ApplyLeaveScreenNewState extends State<ApplyLeaveScreenNew> {
       body: Stack(
         children: [
           WatermarkTiledSmall(tileScale: 25.0),
-
           SafeArea(
             child: Center(
               child: Padding(
