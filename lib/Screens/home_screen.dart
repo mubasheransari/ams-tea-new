@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:new_amst_flutter/Screens/apply_leave_screen.dart';
 import 'package:new_amst_flutter/Screens/mark_attendance.dart'
     show MarkAttendanceView;
+import 'package:new_amst_flutter/Widgets/gradient_text.dart';
 
 const kBg = Color(0xFFF6F7FA);
 const kTxtDim = Color(0xFF6A6F7B);
@@ -94,7 +95,7 @@ class _Header extends StatelessWidget {
                 WidgetSpan(
                   alignment: PlaceholderAlignment.baseline,
                   baseline: TextBaseline.alphabetic,
-                  child: _GradientText(
+                  child: GradientText(
                     "Test User",
                     gradient: const LinearGradient(
                       colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
@@ -338,7 +339,7 @@ class ApplyLeaveWidget extends StatelessWidget {
                         builder: (_) => const ApplyLeaveScreenNew(),
                         fullscreenDialog: true,
                       ),
-                    );//   Navigator.push(context, MaterialPageRoute(builder: (context)=> ApplyLeaveScreen()));
+                    );
 
                   },
                   child: _ChipButtonWhite(
@@ -396,7 +397,7 @@ class SalesWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _GradientText(
+                GradientText(
                   'Daily\nSales',
                   gradient: const LinearGradient(
                     colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
@@ -526,18 +527,18 @@ class _ChipButtonGradient extends StatelessWidget {
   }
 }
 
-class _GradientText extends StatelessWidget {
-  const _GradientText(this.text, {required this.gradient, required this.style});
-  final String text;
-  final Gradient gradient;
-  final TextStyle style;
+// class _GradientText extends StatelessWidget {
+//   const _GradientText(this.text, {required this.gradient, required this.style});
+//   final String text;
+//   final Gradient gradient;
+//   final TextStyle style;
 
-  @override
-  Widget build(BuildContext context) {
-    return ShaderMask(
-      shaderCallback: (rect) => gradient.createShader(rect),
-      blendMode: BlendMode.srcIn,
-      child: Text(text, style: style.copyWith(fontFamily: 'ClashGrotesk')),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return ShaderMask(
+//       shaderCallback: (rect) => gradient.createShader(rect),
+//       blendMode: BlendMode.srcIn,
+//       child: Text(text, style: style.copyWith(fontFamily: 'ClashGrotesk')),
+//     );
+//   }
+// }
