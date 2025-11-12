@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:new_amst_flutter/Screens/app_leave_screen.dart';
+import 'package:new_amst_flutter/Screens/apply_leave_screen.dart';
 import 'package:new_amst_flutter/Screens/mark_attendance.dart'
     show MarkAttendanceView;
 
@@ -50,15 +50,9 @@ class HomeScreen extends StatelessWidget {
                   SizedBox(height: 25 * s),
                   MarkAttendanceWidget(s: s),
                   SizedBox(height: 30 * s),
-                  InkWell(
-                    onTap: () {},
-                    child: SalesWidget(s: s),
-                  ),
+                  SalesWidget(s: s),
                        SizedBox(height: 25 * s),
-                  InkWell(
-                    onTap: () {
-                    },
-                    child: ApplyLeaveWidget(s: s))
+                  ApplyLeaveWidget(s: s)
                 ],
               ),
             ),
@@ -270,8 +264,6 @@ class MarkAttendanceWidget extends StatelessWidget {
   }
 }
 
-
-
 class ApplyLeaveWidget extends StatelessWidget {
   const ApplyLeaveWidget({required this.s, super.key});
   final double s;
@@ -283,7 +275,7 @@ class ApplyLeaveWidget extends StatelessWidget {
       width: MediaQuery.of(context).size.width * 0.90,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)], // same vibe
+          colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)], 
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -299,20 +291,19 @@ class ApplyLeaveWidget extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // right illustration
           Positioned(
             right: -29 * s,
             top: 18 * s,
             child: SizedBox(
-              width: 205 * s,
-              height: 210 * s,
+              width: 225 * s,
+              height: 215 * s,
               child: Image.asset(
-                 'assets/new_attendance_icon-removebg-preview.png',
+                 'assets/leave_apply_card.png',
                 fit: BoxFit.contain,
               ),
             ),
           ),
-          // text + button
+      
           Padding(
             padding: EdgeInsets.all(16 * s),
             child: Column(
@@ -344,7 +335,7 @@ class ApplyLeaveWidget extends StatelessWidget {
                   onTap: () {
                                      Navigator.of(context, rootNavigator: true).push(
                       MaterialPageRoute(
-                        builder: (_) => const ApplyLeaveScreen(),
+                        builder: (_) => const ApplyLeaveScreenNew(),
                         fullscreenDialog: true,
                       ),
                     );//   Navigator.push(context, MaterialPageRoute(builder: (context)=> ApplyLeaveScreen()));
@@ -364,7 +355,6 @@ class ApplyLeaveWidget extends StatelessWidget {
     );
   }
 }
-
 
 class SalesWidget extends StatelessWidget {
   const SalesWidget({required this.s});
