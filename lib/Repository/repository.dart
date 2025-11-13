@@ -9,6 +9,8 @@ class Repository {
 
   final registerUrl = "http://teaapis.mezangrp.com/amstea/index.php?route=api/user/signup";
 
+   final loginUrl = "http://teaapis.mezangrp.com/amstea/index.php?route=api/user/login";
+
 
   Future<http.Response> registerUser({
     required String code,
@@ -83,6 +85,57 @@ class Repository {
     final ok = status >= 200 && status < 300;
     return (ok: ok, message: ok ? 'Done' : 'Request failed ($status)');
   }
+
+
+  Future<http.Response> login({
+  required String email,
+  required String pass,
+  required String latitude,    // keep as String if backend expects string
+  required String longitude,   // keep as String if backend expects string
+  required String actType,     // e.g. "LOGIN"
+  required String action,      // e.g. "IN"
+  required String attTime,     // e.g. "11:20:52"
+  required String attDate,     // e.g. "13-Nov-2025"
+  required String appVersion,  // e.g. "2.0.2"
+  required String add,         // address/notes
+  required String deviceId,    // e.g. "0d6bb3238ca24544"
+}) async {
+  final payload = <String, dynamic>{
+    "email": email,
+    "pass": pass,
+    "latitude": latitude,
+    "longitude": longitude,
+    "act_type": actType,
+    "action": action,
+    "att_time": attTime,
+    "att_date": attDate,
+    "app_version": appVersion,
+    "add": add,
+    "device_id": deviceId,
+  };
+
+  final formBody = {"request": jsonEncode(payload)};
+
+  try {
+    final res = await http
+        .post(Uri.parse(loginUrl), headers: _formHeaders, body: formBody)
+        .timeout(const Duration(seconds: 30));
+
+    debugPrint("⬅️ /login ${res.statusCode}: ${res.body}");
+    return res;
+  } on TimeoutException {
+    return http.Response(
+      jsonEncode({"isSuccess": false, "message": "Request timed out. Please try again."}),
+      408,
+    );
+  } catch (e, st) {
+    debugPrint('login error: $e\n$st');
+    return http.Response(
+      jsonEncode({"isSuccess": false, "message": "Unexpected error: $e"}),
+      520,
+    );
+  }
+}
 
 /*
 Future<http.Response> registerUser({

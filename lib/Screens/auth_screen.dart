@@ -189,7 +189,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   // ----------------- submit handlers -----------------
   Future<void> _submitLogin() async {
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AppShell()));
+  //  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AppShell()));
     // if (!(_loginFormKey.currentState?.validate() ?? false)) return;
 
     // setState(() => _loginLoading = true);
@@ -204,6 +204,22 @@ class _AuthScreenState extends State<AuthScreen> {
     //   // TODO: navigate to your app shell
     //   // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AppShell()));
     // }
+
+
+    await Repository().login(
+  email: "mubashera38@gmail.com",
+  pass: "123",
+  latitude: "24.8870845",
+  longitude: "66.9788333",
+  actType: "LOGIN",
+  action: "IN",
+  attTime: "11:20:52",
+  attDate: "13-Nov-2025",
+  appVersion: "2.0.2",
+  add: "fyghfshfohfor",
+  deviceId: "0d6bb3238ca24544",
+);
+
   }
 
   Future<void> _submitSignup() async {
