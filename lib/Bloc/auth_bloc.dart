@@ -1,19 +1,58 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:new_amst_flutter/Bloc/auth_event.dart';
 import 'package:new_amst_flutter/Bloc/auth_state.dart';
+import 'package:new_amst_flutter/Model/loginModel.dart';
 import 'package:new_amst_flutter/Repository/repository.dart';
 import 'package:bloc/bloc.dart';
 
-
+final now = DateTime.now();
+    final currentDate = DateFormat("dd-MMM-yyyy").format(now);
+    final currentTime = DateFormat("HH:mm:ss").format(now);
 
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final Repository repo;
-
+  LoginModel loginModel = LoginModel();
   AuthBloc(this.repo) : super(const AuthState()) {
     on<GetLeavesTypeEvent>(_getLeavesTypes);
-    print('[AuthBloc] constructed');
+    on<LoginEvent>(_login);
   }
+
+  
+
+
+
+  Future<void> _login(LoginEvent event, Emitter<AuthState> emit) async {
+
+    emit(state.copyWith(loginStatus: LoginStatus.loading));
+    try {
+      final response = await repo.login(email: event.email, pass: event.password, latitude: '0', longitude: '0', actType: 'LOGIN', action: 'IN', attTime: currentDate, attDate: currentTime, appVersion: '2.0.2', add: '', deviceId: '0d6bb3238ca24544');
+      if (response.statusCode == 200) {
+        final loginModel = loginModelFromJson(response.body);
+        if (loginModel.status == "1") {
+          emit(state.copyWith(loginStatus: LoginStatus.success, loginModel: loginModel));
+        } else {
+          emit(state.copyWith(loginStatus: LoginStatus.failure, loginModel: loginModel));
+        }
+      } else {
+        emit(state.copyWith(loginStatus: LoginStatus.failure));
+      }
+    } catch (e, st) {
+      debugPrint("login error: $e\n$st");
+      emit(state.copyWith(loginStatus: LoginStatus.failure));
+    }
+  }
+
+
+
+
+
+
+
+
+
 
   Future<void> _getLeavesTypes(
     GetLeavesTypeEvent event,
