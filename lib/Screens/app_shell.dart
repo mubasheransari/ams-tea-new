@@ -78,7 +78,7 @@ class _AppShellState extends State<AppShell> {
 }
 
 class _TabNavigator extends StatelessWidget {
-  const _TabNavigator({super.key, required this.navKey, required this.initial});
+  const _TabNavigator({required this.navKey, required this.initial});
   final GlobalKey<NavigatorState> navKey;
   final Widget initial;
 

@@ -58,7 +58,7 @@ class BottomBar extends StatelessWidget {
       precacheImage(AssetImage(activeAsset), context);
     }
 
-    Widget _chip({
+    Widget chip0({
       required String asset,
       required VoidCallback onTap,
       Color? haloColor,
@@ -122,7 +122,7 @@ class BottomBar extends StatelessWidget {
       );
     }
 
-    Widget _gradientChip({
+    Widget gradientChip({
       required String asset,
       required VoidCallback onTap,
       bool lift = true,
@@ -167,14 +167,14 @@ class BottomBar extends StatelessWidget {
       );
     }
 
-    Widget _buildItem(BottomTab tab) {
+    Widget buildItem(BottomTab tab) {
       final asset = _iconPath[tab]!;
       final isActive = safeActive == tab;
 
       if (isActive) {
-        return _gradientChip(asset: asset, onTap: () => _go(tab), lift: true);
+        return gradientChip(asset: asset, onTap: () => _go(tab), lift: true);
       }
-      return _chip(
+      return chip0(
         asset: asset,
         onTap: () => _go(tab),
         haloColor: _halo[tab],
@@ -210,7 +210,7 @@ class BottomBar extends StatelessWidget {
                 BottomTab.home,
                 BottomTab.reports,
                 BottomTab.profile,
-              ].map(_buildItem).toList(),
+              ].map(buildItem).toList(),
           ),
           ),
         ),

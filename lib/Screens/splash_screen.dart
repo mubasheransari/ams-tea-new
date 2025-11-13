@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:new_amst_flutter/Bloc/auth_bloc.dart' show AuthBloc;
 import 'package:new_amst_flutter/Screens/app_shell.dart';
 import 'package:new_amst_flutter/Screens/auth_screen.dart';
 import 'package:new_amst_flutter/Widgets/watermarked_widget.dart';
@@ -30,14 +32,25 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       final token = (GetStorage().read<String>('auth_token') ?? '').trim();
       final hasToken = token.isNotEmpty;
 
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) => hasToken
-              ? const AppShell() //InspectionHomePixelPerfect()
-              :  AuthScreen(),
-        ),
-        (route) => false,
-      );
+      Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(
+    builder: (_) => BlocProvider.value(
+      value: context.read<AuthBloc>(),
+      child: const AuthScreen(),
+    ),
+  ),
+);
+
+
+      // Navigator.of(context).pushAndRemoveUntil(
+      //   MaterialPageRoute(
+      //     builder: (_) => hasToken
+      //         ? const AppShell() //InspectionHomePixelPerfect()
+      //         :  AuthScreen(),
+      //   ),
+      //   (route) => false,
+      // );
     });
   }
 

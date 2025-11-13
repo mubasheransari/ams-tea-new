@@ -1,40 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
 import 'package:new_amst_flutter/Bloc/auth_event.dart';
 import 'package:new_amst_flutter/Repository/repository.dart';
-import 'package:new_amst_flutter/Screens/request_leave.dart';
 import 'package:new_amst_flutter/Screens/splash_screen.dart';
-
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await GetStorage.init();
 
-  final box = GetStorage();
   final repo = Repository();
+  final authBloc = AuthBloc(repo)
+    ..add(LoginEvent('mubashera38@gmail.com','123')); 
 
-  final userId = (box.read('user_id') ?? '3839').toString();
-
-  runApp(
-    RepositoryProvider.value(
-      value: repo,
-      child: BlocProvider<AuthBloc>(
-        create: (_) => AuthBloc(repo)..add(GetLeavesTypeEvent(userId)),
-        child: MyApp(),
-      ),
-    ),
-  );
+  runApp(MyApp(repo: repo, authBloc: authBloc));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final Repository repo;
+  final AuthBloc authBloc;
+  const MyApp({super.key, required this.repo, required this.authBloc});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'AMS-T',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.deepPurple),
+
+
+      builder: (context, child) {
+        return RepositoryProvider.value(
+          value: repo,
+          child: BlocProvider<AuthBloc>.value(
+            value: authBloc,
+            child: child!,
+          ),
+        );
+      },
+
       home: const SplashScreen(),
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class WatermarkTiledSmall extends StatelessWidget {
-  const WatermarkTiledSmall({this.tileScale = 3.0});
+  const WatermarkTiledSmall({super.key, this.tileScale = 3.0});
   // Bigger value => smaller tile (3.0 draws the image at 1/3 size)
   final double tileScale;
 

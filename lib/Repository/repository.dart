@@ -107,7 +107,7 @@ class Repository {
     "longitude": longitude,
     "act_type": actType,
     "action": action,
-    "att_time": attTime,
+    "att_time":"10:32:00",
     "att_date": attDate,
     "app_version": appVersion,
     "add": add,

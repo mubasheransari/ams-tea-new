@@ -176,7 +176,7 @@ class _SearchBar extends StatelessWidget {
 }
 
 class MarkAttendanceWidget extends StatelessWidget {
-  const MarkAttendanceWidget({required this.s});
+  const MarkAttendanceWidget({super.key, required this.s});
   final double s;
 
   @override
@@ -358,7 +358,7 @@ class ApplyLeaveWidget extends StatelessWidget {
 }
 
 class SalesWidget extends StatelessWidget {
-  const SalesWidget({required this.s});
+  const SalesWidget({super.key, required this.s});
   final double s;
 
   @override

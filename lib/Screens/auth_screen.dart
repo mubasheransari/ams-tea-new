@@ -4,10 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:new_amst_flutter/Bloc/auth_event.dart';
 import 'package:new_amst_flutter/Bloc/auth_state.dart';
 import 'package:new_amst_flutter/Repository/repository.dart';
+import 'package:new_amst_flutter/Screens/app_shell.dart';
 import 'package:new_amst_flutter/Widgets/watermarked_widget.dart';
 import 'dart:ui' as ui;
 
-import 'package:new_amst_flutter/bloc/auth_bloc.dart';
+import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
 
 void showToast(BuildContext context, String message, {bool success = true}) {
   final mq = MediaQuery.of(context);
@@ -85,7 +86,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _signupObscure = true;
 
   // loading flags
-  bool _loginLoading = false;
+  final bool _loginLoading = false;
   bool _signupLoading = false;
 
   final _repo = Repository();
@@ -176,7 +177,6 @@ class _AuthScreenState extends State<AuthScreen> {
 
   // ----------------- submit handlers -----------------
   Future<void> _submitLogin() async {
-    
     //  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AppShell()));
     // if (!(_loginFormKey.currentState?.validate() ?? false)) return;
 
@@ -479,36 +479,58 @@ class _AuthScreenState extends State<AuthScreen> {
                                     SizedBox(
                                       width: 160,
                                       height: 40,
-                                      child:
-                                          BlocConsumer<
-                                              AuthBloc,
-                                            AuthState
-                                          >(
-                                            listener: (context, state) {
-                                           
-                                            },
-                                            builder: (context, state) {
-                                              return _PrimaryGradientButton(
-                                                text: _loginLoading
-                                                    ? 'PLEASE WAIT...'
-                                                    : 'LOGIN',
-                                                onPressed: _loginLoading
-                                                    ? null: (){
-context.read<AuthBloc>().state.add(LoginEvent(_loginEmailCtrl.text, _loginPassCtrl.text));
-                                                    },
-                                                 //   : _submitLogin,
-                                                loading: _loginLoading,
-                                              );
-                                            },
-                                          ),
+                                      child: BlocConsumer<AuthBloc, AuthState>(
+                                         listener: (context, state) {
+    if (state.loginStatus == LoginStatus.success) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const AppShell()),
+        (route) => false,
+      );
+     // toastWidget("✅ Authenticated Successfully!", Colors.green);
+
+    
+    } else if (state.loginStatus== LoginStatus.failure) {
+     // toastWidget("Incorrect Email or Password", Colors.red);
+     print("LOGGED IN FAILED ");
+      print("LOGGED IN FAILED ");
+       print("LOGGED IN FAILED ");
+        print("LOGGED IN FAILED ");
+    }
+  }, //listener: (context, state) {},
+                                        builder: (context, state) {
+                                          return _PrimaryGradientButton(
+                                            text: _loginLoading
+                                                ? 'PLEASE WAIT...'
+                                                : 'LOGIN',
+                                            onPressed: _loginLoading
+                                                ? null
+                                                : () {
+                                                 _submitLogin();
+                                                    // context
+                                                    //     .read<AuthBloc>()
+                                                    //     .add(
+                                                    //       LoginEvent(
+                                                    //         _loginEmailCtrl.text
+                                                    //             .trim(),
+                                                    //         _loginPassCtrl.text,
+                                                    //       ),
+                                                    //     );
+                                                  },
+
+                                            loading: _loginLoading,
+                                          );
+                                        },
+                                      ),
                                     ),
                                     const SizedBox(height: 18),
                                     _FooterSwitch(
                                       prompt: "Don’t have an account? ",
                                       action: "Create an account",
                                       onTap: () => setState(() {
-                                        if (_scrollCtrl.hasClients)
+                                        if (_scrollCtrl.hasClients) {
                                           _scrollCtrl.jumpTo(0);
+                                        }
                                         tab = 1;
                                         _scrollY = 0;
                                       }),
@@ -661,7 +683,7 @@ context.read<AuthBloc>().state.add(LoginEvent(_loginEmailCtrl.text, _loginPassCt
                                           const SizedBox(width: 10),
                                           Expanded(
                                             child: DropdownButtonFormField<String>(
-                                              value: _channelType,
+                                              initialValue: _channelType,
                                               isExpanded: true,
                                               alignment: Alignment.centerLeft,
                                               style: const TextStyle(
@@ -779,8 +801,9 @@ context.read<AuthBloc>().state.add(LoginEvent(_loginEmailCtrl.text, _loginPassCt
                                       prompt: "Already have an account? ",
                                       action: "Login",
                                       onTap: () => setState(() {
-                                        if (_scrollCtrl.hasClients)
+                                        if (_scrollCtrl.hasClients) {
                                           _scrollCtrl.jumpTo(0);
+                                        }
                                         tab = 0;
                                         _scrollY = 0;
                                       }),

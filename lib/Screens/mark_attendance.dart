@@ -161,7 +161,7 @@ class _MarkAttendanceViewState extends State<MarkAttendanceView> {
 
   final loc.Location location = loc.Location();
   late GoogleMapController _mapController;
-  Set<Marker> _markers = {};
+  final Set<Marker> _markers = {};
   BitmapDescriptor? _currentMarkerIcon;
   LatLng? _currentLatLng;
   CameraPosition? _initialCameraPosition;
@@ -554,7 +554,7 @@ class _PrimaryGradientButton extends StatelessWidget {
   const _PrimaryGradientButton({
     required this.text,
     required this.onPressed,
-    this.loading = false,
+    this.loading = false
   });
 
   final String text;
@@ -620,17 +620,18 @@ class _PunchCard extends StatelessWidget {
   final String title;
   final String time;
   final bool lightOnGradient; // switch to white text when placed on gradient
+
   const _PunchCard({
     required this.title,
     required this.time,
-    this.lightOnGradient = false,
+    this.lightOnGradient = false, // ✅ default value
   });
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final titleColor = lightOnGradient ? Colors.white : const Color(0xFF1E1E1E);
-    final timeColor = lightOnGradient ? Colors.white : const Color(0xFFEA7A3B);
+    final timeColor  = lightOnGradient ? Colors.white : const Color(0xFFEA7A3B);
 
     return Column(
       children: [
@@ -653,6 +654,44 @@ class _PunchCard extends StatelessWidget {
     );
   }
 }
+
+
+// class _PunchCard extends StatelessWidget {
+//   final String title;
+//   final String time;
+//   final bool lightOnGradient; // switch to white text when placed on gradient
+//   const _PunchCard({
+//     required this.title,
+//     required this.time,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final t = Theme.of(context).textTheme;
+//     final titleColor = lightOnGradient ? Colors.white : const Color(0xFF1E1E1E);
+//     final timeColor = lightOnGradient ? Colors.white : const Color(0xFFEA7A3B);
+
+//     return Column(
+//       children: [
+//         Text(
+//           title,
+//           style: t.bodyMedium?.copyWith(
+//             fontWeight: FontWeight.w600,
+//             color: titleColor,
+//           ),
+//         ),
+//         const SizedBox(height: 6),
+//         Text(
+//           time,
+//           style: t.titleMedium?.copyWith(
+//             fontWeight: FontWeight.bold,
+//             color: timeColor,
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
 
 
 /*import 'dart:async';

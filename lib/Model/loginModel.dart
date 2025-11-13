@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'dart:convert';
 
 LoginModel loginModelFromJson(String str) =>
     LoginModel.fromJson(json.decode(str) as Map<String, dynamic>);

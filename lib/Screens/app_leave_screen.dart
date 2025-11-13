@@ -26,7 +26,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   final _toCtrl       = TextEditingController();
   final _descCtrl     = TextEditingController();
 
-  bool _submitting = false;
+  final bool _submitting = false;
 
   static final _fmt = DateFormat('dd-MMM-yyyy'); // 01-Feb-2025
 
@@ -299,24 +299,23 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   }
 }
 
-/* ---------- Lightweight styled pieces (match your Auth look) ---------- */
 
 class _InputCardModern extends StatelessWidget {
   const _InputCardModern({
     required this.hint,
     required this.iconAsset,
     this.controller,
-    this.keyboardType,
     this.validator,
     this.maxLines = 1,
+    this.keyboardType, // <-- added
   });
 
   final String hint;
   final String iconAsset;
   final TextEditingController? controller;
-  final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final int maxLines;
+  final TextInputType? keyboardType; // <-- now initialized via ctor
 
   @override
   Widget build(BuildContext context) {
@@ -324,16 +323,19 @@ class _InputCardModern extends StatelessWidget {
       decoration: _kCardDeco,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Row(
-        crossAxisAlignment: maxLines == 1 ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+        crossAxisAlignment:
+            maxLines == 1 ? CrossAxisAlignment.center : CrossAxisAlignment.start,
         children: [
           Image.asset(iconAsset, height: 17, width: 17, color: const Color(0xFF1B1B1B)),
           const SizedBox(width: 10),
           Expanded(
             child: TextFormField(
               controller: controller,
-              keyboardType: keyboardType,
+              keyboardType: keyboardType ??
+                  (maxLines > 1 ? TextInputType.multiline : TextInputType.text),
               validator: validator,
               maxLines: maxLines,
+              textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.done,
               style: const TextStyle(
                 fontFamily: 'ClashGrotesk',
                 color: Colors.black,
@@ -365,7 +367,7 @@ class _DropdownModern extends StatelessWidget {
     required this.onChanged,
     this.value,
     this.validator,
-    this.disabledHint,
+    this.disabledHint, // <-- added
   });
 
   final String hint;
@@ -373,7 +375,7 @@ class _DropdownModern extends StatelessWidget {
   final String? value;
   final String? Function(String?)? validator;
   final void Function(String?)? onChanged;
-  final Widget? disabledHint;
+  final Widget? disabledHint; // <-- now initialized via ctor
 
   @override
   Widget build(BuildContext context) {
@@ -382,7 +384,7 @@ class _DropdownModern extends StatelessWidget {
       decoration: _kCardDeco,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: DropdownButtonFormField<String>(
-        value: value,
+        value: value, // (use `value`; `initialValue` can be problematic)
         items: items,
         onChanged: onChanged,
         validator: validator,
@@ -426,6 +428,133 @@ class _DropdownModern extends StatelessWidget {
     );
   }
 }
+
+
+/* ---------- Lightweight styled pieces (match your Auth look) ---------- */
+
+// class _InputCardModern extends StatelessWidget {
+//   const _InputCardModern({
+//     required this.hint,
+//     required this.iconAsset,
+//     this.controller,
+//     this.validator,
+//     this.maxLines = 1,
+//   });
+
+//   final String hint;
+//   final String iconAsset;
+//   final TextEditingController? controller;
+//   final TextInputType? keyboardType;
+//   final String? Function(String?)? validator;
+//   final int maxLines;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       decoration: _kCardDeco,
+//       padding: const EdgeInsets.symmetric(horizontal: 14),
+//       child: Row(
+//         crossAxisAlignment: maxLines == 1 ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+//         children: [
+//           Image.asset(iconAsset, height: 17, width: 17, color: const Color(0xFF1B1B1B)),
+//           const SizedBox(width: 10),
+//           Expanded(
+//             child: TextFormField(
+//               controller: controller,
+//               keyboardType: keyboardType,
+//               validator: validator,
+//               maxLines: maxLines,
+//               style: const TextStyle(
+//                 fontFamily: 'ClashGrotesk',
+//                 color: Colors.black,
+//                 fontSize: 16,
+//                 fontWeight: FontWeight.w600,
+//               ),
+//               decoration: InputDecoration(
+//                 hintText: hint,
+//                 border: InputBorder.none,
+//                 isCollapsed: true,
+//                 hintStyle: const TextStyle(
+//                   fontFamily: 'ClashGrotesk',
+//                   color: Colors.black54,
+//                   fontSize: 16,
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+// class _DropdownModern extends StatelessWidget {
+//   const _DropdownModern({
+//     required this.hint,
+//     required this.items,
+//     required this.onChanged,
+//     this.value,
+//     this.validator,
+//   });
+
+//   final String hint;
+//   final List<DropdownMenuItem<String>> items;
+//   final String? value;
+//   final String? Function(String?)? validator;
+//   final void Function(String?)? onChanged;
+//   final Widget? disabledHint;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       height: 56,
+//       decoration: _kCardDeco,
+//       padding: const EdgeInsets.symmetric(horizontal: 12),
+//       child: DropdownButtonFormField<String>(
+//         initialValue: value,
+//         items: items,
+//         onChanged: onChanged,
+//         validator: validator,
+//         isExpanded: true,
+//         decoration: const InputDecoration(
+//           border: InputBorder.none,
+//           isCollapsed: true,
+//           contentPadding: EdgeInsets.zero,
+//         ),
+//         hint: Text(
+//           hint,
+//           textAlign: TextAlign.center,
+//           style: const TextStyle(
+//             fontFamily: 'ClashGrotesk',
+//             color: Colors.black54,
+//             fontSize: 16,
+//             fontWeight: FontWeight.w600,
+//           ),
+//         ),
+//         disabledHint: disabledHint,
+//         icon: Container(
+//           height: 36,
+//           width: 34,
+//           alignment: Alignment.center,
+//           decoration: BoxDecoration(
+//             color: const Color(0xFFEDE7FF),
+//             borderRadius: BorderRadius.circular(12),
+//           ),
+//           child: const Icon(Icons.expand_more_rounded, size: 20, color: Color(0xFF7F53FD)),
+//         ),
+//         borderRadius: BorderRadius.circular(14),
+//         dropdownColor: Colors.white,
+//         menuMaxHeight: 300,
+//         style: const TextStyle(
+//           fontFamily: 'ClashGrotesk',
+//           fontSize: 16,
+//           fontWeight: FontWeight.w700,
+//           color: Colors.black,
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 class _DateCard extends StatelessWidget {
   const _DateCard({

@@ -559,13 +559,8 @@ class _DownloadDialog extends StatelessWidget {
                       backgroundColor: const Color(0xFF4F7BFF),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14 * s)),
                     ).copyWith(
-                      backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                        (states) => const LinearGradient(
-                          colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
-                        ).createShader(const Rect.fromLTWH(0, 0, 300, 48)) !=
-                                null
-                            ? const Color(0xFF4F7BFF)
-                            : const Color(0xFF4F7BFF),
+                      backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                        (states) => const Color(0xFF4F7BFF),
                       ),
                     ),
                   ),

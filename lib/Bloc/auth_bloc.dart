@@ -25,10 +25,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
 
   Future<void> _login(LoginEvent event, Emitter<AuthState> emit) async {
+    print("DATE $currentDate");
+    print("TIME $currentTime");
+    print("EMAIL ${event.email}");
+    print("PASSWORD ${event.password}");
 
     emit(state.copyWith(loginStatus: LoginStatus.loading));
     try {
-      final response = await repo.login(email: event.email, pass: event.password, latitude: '0', longitude: '0', actType: 'LOGIN', action: 'IN', attTime: currentDate, attDate: currentTime, appVersion: '2.0.2', add: '', deviceId: '0d6bb3238ca24544');
+      final response = await repo.login(email: event.email, pass: event.password,   latitude: "24.8870845",
+      longitude: "66.9788333", actType: 'LOGIN', action: 'IN', attTime: currentDate, attDate: "10:32:00", appVersion: '2.0.2', add: 'mnbjbjhb', deviceId: '0d6bb3238ca24544');
       if (response.statusCode == 200) {
         final loginModel = loginModelFromJson(response.body);
         if (loginModel.status == "1") {
