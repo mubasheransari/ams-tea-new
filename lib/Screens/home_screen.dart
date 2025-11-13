@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:new_amst_flutter/Screens/apply_leave_screen.dart';
 import 'package:new_amst_flutter/Screens/mark_attendance.dart'
     show MarkAttendanceView;
+import 'package:new_amst_flutter/Screens/products.dart';
 import 'package:new_amst_flutter/Widgets/gradient_text.dart';
 
 const kBg = Color(0xFFF6F7FA);
@@ -423,7 +424,11 @@ class SalesWidget extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                _ChipButtonGradient(s: s, label: 'Enter your Sales'),
+                InkWell(
+                  onTap: (){
+                    Navigator.push(context, MaterialPageRoute(builder: (context)=> TeaCatalogScreen()));
+                  },
+                  child: _ChipButtonGradient(s: s, label: 'Enter your Sales')),
               ],
             ),
           ),

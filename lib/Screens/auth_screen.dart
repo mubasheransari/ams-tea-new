@@ -506,16 +506,16 @@ class _AuthScreenState extends State<AuthScreen> {
                                             onPressed: _loginLoading
                                                 ? null
                                                 : () {
-                                                 _submitLogin();
-                                                    // context
-                                                    //     .read<AuthBloc>()
-                                                    //     .add(
-                                                    //       LoginEvent(
-                                                    //         _loginEmailCtrl.text
-                                                    //             .trim(),
-                                                    //         _loginPassCtrl.text,
-                                                    //       ),
-                                                    //     );
+                                               //  _submitLogin();
+                                                    context
+                                                        .read<AuthBloc>()
+                                                        .add(
+                                                          LoginEvent(
+                                                            _loginEmailCtrl.text
+                                                                .trim(),
+                                                            _loginPassCtrl.text,
+                                                          ),
+                                                        );
                                                   },
 
                                             loading: _loginLoading,

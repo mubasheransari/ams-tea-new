@@ -7,9 +7,16 @@ import 'dart:io' show Platform;
 
 class Repository {
 
+    Map<String, String> get _formHeaders => const {
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      };
+
   final registerUrl = "http://teaapis.mezangrp.com/amstea/index.php?route=api/user/signup";
 
    final loginUrl = "http://teaapis.mezangrp.com/amstea/index.php?route=api/user/login";
+
+   
 
 
   Future<http.Response> registerUser({
@@ -48,6 +55,7 @@ class Repository {
     };
 
     final formBody = {"request": jsonEncode(payload)};
+    
 
     try {
       final res = await http
@@ -107,7 +115,7 @@ class Repository {
     "longitude": longitude,
     "act_type": actType,
     "action": action,
-    "att_time":"10:32:00",
+      "att_time": attTime, 
     "att_date": attDate,
     "app_version": appVersion,
     "add": add,
@@ -223,10 +231,7 @@ Future<http.Response> registerUser({
         'Accept': 'application/json',
       };
 
-  Map<String, String> get _formHeaders => const {
-        'Accept': 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      };
+
 
   /// High-level call: tries multipart, then x-www-form-urlencoded, then GET.
   Future<GetLeaveTypeModel> getLeaveTypes({
