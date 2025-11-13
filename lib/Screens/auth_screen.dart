@@ -189,6 +189,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   // ----------------- submit handlers -----------------
   Future<void> _submitLogin() async {
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AppShell()));
     // if (!(_loginFormKey.currentState?.validate() ?? false)) return;
 
     // setState(() => _loginLoading = true);
