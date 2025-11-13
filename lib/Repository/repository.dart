@@ -9,6 +9,82 @@ class Repository {
 
   final registerUrl = "http://teaapis.mezangrp.com/amstea/index.php?route=api/user/signup";
 
+
+  Future<http.Response> registerUser({
+    required String code,
+    required String name,
+    required String cnic,
+    required String address,
+    required String mobile1,
+    required String mobile2,
+    required String email,
+    required String password,
+    required String distribution,
+    required String territory,
+    required String channel,
+    required String latitude,   // keep as String if backend expects string
+    required String longitude,  // keep as String if backend expects string
+    required String deviceId,
+    required String regToken,   // keep as String if backend expects string
+  }) async {
+    final payload = <String, dynamic>{
+      "code": code,
+      "name": name,
+      "cnic": cnic,
+      "address": address,
+      "mobile1": mobile1,
+      "mobile2": mobile2,
+      "email": email,
+      "password": password,
+      "distribution": distribution,
+      "territory": territory,
+      "channel": channel,
+      "latitude": latitude,
+      "longitude": longitude,
+      "deviceid": deviceId,
+      "regtoken": regToken,
+    };
+
+    final formBody = {"request": jsonEncode(payload)};
+
+    try {
+      final res = await http
+          .post(Uri.parse(registerUrl), headers: _formHeaders, body: formBody)
+          .timeout(const Duration(seconds: 30));
+      debugPrint("⬅️ /register ${res.statusCode}: ${res.body}");
+      return res;
+    } on TimeoutException {
+      return http.Response(
+        jsonEncode({"isSuccess": false, "message": "Request timed out. Please try again."}),
+        408,
+      );
+    } catch (e, st) {
+      debugPrint('registerUser error: $e\n$st');
+      return http.Response(
+        jsonEncode({"isSuccess": false, "message": "Unexpected error: $e"}),
+        520,
+      );
+    }
+  }
+
+
+  static ({bool ok, String message}) parseApiMessage(String body, int status) {
+    try {
+      final obj = jsonDecode(body);
+      // Handle common shapes
+      if (obj is Map) {
+        final msg = (obj['message'] ?? obj['Message'] ?? obj['msg'] ?? '').toString();
+        final ok = (obj['isSuccess'] == true) ||
+            (status >= 200 && status < 300);
+        return (ok: ok, message: msg.isEmpty ? 'Done' : msg);
+      }
+    } catch (_) {}
+    // Fallback
+    final ok = status >= 200 && status < 300;
+    return (ok: ok, message: ok ? 'Done' : 'Request failed ($status)');
+  }
+
+/*
 Future<http.Response> registerUser({
     required String code,
     required String name,
@@ -65,7 +141,7 @@ Future<http.Response> registerUser({
     debugPrint("⬅️ /register ${res.statusCode}: ${res.body}");
     return res;
   }
-
+*/
   
   // Toggle these depending on where your PHP server is running
   static const String _lanHost = '192.168.1.73'; // physical device target
