@@ -1,7 +1,4 @@
-// report_history_screen.dart
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:new_amst_flutter/Screens/home_screen.dart';
 import 'package:new_amst_flutter/Screens/location_google_maos.dart' hide BottomTab;
 import 'package:new_amst_flutter/Screens/products.dart';
 import 'dart:typed_data';
@@ -10,15 +7,19 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+
+
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
+import 'package:file_saver/file_saver.dart';
+import 'package:open_filex/open_filex.dart';
 
-// import your OrderRecord & OrdersStorage
-// import 'orders_storage.dart';
+// NOTE: Import your existing models/storage.
+//// import 'orders_storage.dart'; // must provide OrderRecord & OrdersStorage
 
 class ReportHistoryScreen extends StatefulWidget {
   const ReportHistoryScreen({super.key});
@@ -40,6 +41,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
   void initState() {
     super.initState();
     _loadOrders();
+    // Live reload as soon as cart screen updates 'local_orders'
     _box.listenKey('local_orders', (_) {
       if (!mounted) return;
       _loadOrders();
@@ -62,16 +64,16 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
         return _orders;
       case _Filter.today:
         return _orders.where((e) =>
-            e.createdAt.year == now.year &&
-            e.createdAt.month == now.month &&
-            e.createdAt.day == now.day).toList();
+          e.createdAt.year == now.year &&
+          e.createdAt.month == now.month &&
+          e.createdAt.day == now.day).toList();
       case _Filter.last7:
         final from = now.subtract(const Duration(days: 7));
         return _orders.where((e) => e.createdAt.isAfter(from)).toList();
       case _Filter.thisMonth:
         return _orders.where((e) =>
-            e.createdAt.year == now.year &&
-            e.createdAt.month == now.month).toList();
+          e.createdAt.year == now.year &&
+          e.createdAt.month == now.month).toList();
     }
   }
 
@@ -92,33 +94,94 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
     return more > 0 ? '$name +$more more' : name;
   }
 
-  // NEW: preview PDF (can be done unlimited times)
+  // ====== PDF actions (unlimited) ======
+
   Future<void> _viewPdf(OrderRecord r) async {
     final bytes = await _buildPdfBytes(r);
     await Printing.layoutPdf(onLayout: (format) async => bytes);
   }
 
-  // Download/share PDF (can be done unlimited times)
-  Future<void> _downloadPdf(OrderRecord r) async {
-    final bytes = await _buildPdfBytes(r); // Uint8List
-    final fname = 'order_${r.id}.pdf';
-    await Printing.sharePdf(bytes: bytes, filename: fname);
 
-    // Optional: mark as downloaded just for badge/label (no restriction applied)
-    await OrdersStorage().setDownloaded(r.id, true);
-    if (!mounted) return;
-    final i = _orders.indexWhere((e) => e.id == r.id);
-    if (i >= 0) setState(() => _orders[i] = _orders[i].copyWith(downloaded: true));
 
+Future<void> _downloadPdf(OrderRecord r) async {
+  final Uint8List bytes = await _buildPdfBytes(r); // must return Uint8List
+  final String baseName = 'order_${r.id}';
+
+  String? savedPath;
+  try {
+    savedPath = await FileSaver.instance.saveFile(
+      name: baseName,        // REQUIRED named param
+      bytes: bytes,          // REQUIRED named param (Uint8List)
+      ext: 'pdf',            // file extension without dot
+      // mimeType: MimeType.pdf,  // optional (omit if enum mismatch)
+    );
+  } catch (e) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('PDF ready: $fname')),
+      SnackBar(content: Text('Save failed: $e')),
     );
+    return;
   }
+
+  // Optional: mark as downloaded for badge/label; does NOT restrict future downloads
+  await OrdersStorage().setDownloaded(r.id, true);
+  if (!mounted) return;
+  final i = _orders.indexWhere((e) => e.id == r.id);
+  if (i >= 0) setState(() => _orders[i] = _orders[i].copyWith(downloaded: true));
+
+  // Notify + quick OPEN action
+  final path = savedPath ?? '';
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(path.isEmpty ? 'PDF saved' : 'Saved to: $path'),
+      action: path.isEmpty
+          ? null
+          : SnackBarAction(
+              label: 'OPEN',
+              onPressed: () => OpenFilex.open(path),
+            ),
+    ),
+  );
+}
+
+
+  // Future<void> _downloadPdf(OrderRecord r) async {
+  //   final bytes = await _buildPdfBytes(r); // Uint8List
+  //   final base = 'order_${r.id}';
+  //   // Save directly to user-visible storage (Downloads on Android)
+  //   final savedPath = await FileSaver.instance.saveFile(
+  //     base,      // filename without extension
+  //     bytes,     // Uint8List
+  //     'pdf',     // extension without dot
+  //     mimeType: MimeType.PDF,
+  //   );
+
+  //   // Optional: mark as downloaded for label/badge; no restriction enforced
+  //   await OrdersStorage().setDownloaded(r.id, true);
+  //   if (!mounted) return;
+  //   final i = _orders.indexWhere((e) => e.id == r.id);
+  //   if (i >= 0) setState(() => _orders[i] = _orders[i].copyWith(downloaded: true));
+
+  //   // Offer to open the saved file right away
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Text(
+  //         (savedPath == null || savedPath.isEmpty)
+  //             ? 'Saved PDF'
+  //             : 'Saved to: $savedPath',
+  //       ),
+  //       action: (savedPath != null && savedPath.isNotEmpty)
+  //           ? SnackBarAction(
+  //               label: 'OPEN',
+  //               onPressed: () => OpenFilex.open(savedPath),
+  //             )
+  //           : null,
+  //     ),
+  //   );
+  // }
 
   Future<Uint8List> _buildPdfBytes(OrderRecord r) async {
     final pdf = pw.Document();
-
     final title = (r.title?.trim().isNotEmpty ?? false) ? r.title!.trim() : _orderTitle(r);
 
     final rows = <pw.TableRow>[
@@ -127,7 +190,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
         children: [
           _cell('No.', bold: true),
           _cell('Product', bold: true),
-          _cell('Brand', bold: true),
+        //  _cell('Brand', bold: true),
           _cellRight('Qty', bold: true),
         ],
       ),
@@ -145,7 +208,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
       rows.add(
         pw.TableRow(
           children: [
-            _cell('$i'),
+         //   _cell('$i'),
             _cell(name),
             _cell(brand),
             _cellRight('$qty'),
@@ -165,7 +228,15 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text('Order Summary', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                     pw.Container(
+                padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical:3),
+                decoration: pw.BoxDecoration(
+                  color: PdfColor.fromInt(0xFFDCE7FF),
+                  borderRadius: pw.BorderRadius.circular(6),
+                ),
+                child: pw.Text('Order Summary', style: const pw.TextStyle(fontSize: 10)),
+              ),
+                  // pw.Text('Order Summary', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
                   if (r.shopName != null && r.shopName!.isNotEmpty)
                     pw.Text(r.shopName!, style: const pw.TextStyle(fontSize: 12)),
                   pw.SizedBox(height: 4),
@@ -174,14 +245,14 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
                   pw.Text(title, style: const pw.TextStyle(fontSize: 12)),
                 ],
               ),
-              pw.Container(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: pw.BoxDecoration(
-                  color: PdfColor.fromInt(0xFFDCE7FF),
-                  borderRadius: pw.BorderRadius.circular(6),
-                ),
-                child: pw.Text('ID: ${r.id}', style: const pw.TextStyle(fontSize: 10)),
-              ),
+              // pw.Container(
+              //   padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              //   decoration: pw.BoxDecoration(
+              //     color: PdfColor.fromInt(0xFFDCE7FF),
+              //     borderRadius: pw.BorderRadius.circular(6),
+              //   ),
+              //   child: pw.Text('ID: ${r.id}', style: const pw.TextStyle(fontSize: 10)),
+              // ),
             ],
           ),
           pw.SizedBox(height: 16),
@@ -212,8 +283,8 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
       ),
     );
 
-    final raw = await pdf.save();        // List<int>
-    return Uint8List.fromList(raw);      // return Uint8List
+    final raw = await pdf.save();           // List<int>
+    return Uint8List.fromList(raw);         // return Uint8List for FileSaver
   }
 
   pw.Widget _cell(String text, {bool bold = false}) => pw.Padding(
@@ -320,7 +391,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.fromLTRB(16 * s, 8 * s, 16 * s, 140 * s + padBottom),
             children: [
-              // Title
+              // Title (unchanged)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -365,16 +436,15 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
                       child: _ReportCard(
                         s: s,
                         dateText: _prettyDate(r.createdAt),
-                        vehicleText: _orderTitle(r), // shows order summary
+                        vehicleText: _orderTitle(r), // show order title/summary
                         completed: true,
-                        // NOTE: button is ALWAYS enabled now
-                        downloaded: r.downloaded,
+                        downloaded: r.downloaded,    // only affects label
                         onDownload: () async {
                           final act = await _showActionDialog(context);
                           if (act == _DlgAction.view) {
                             await _viewPdf(r);
                           } else if (act == _DlgAction.download) {
-                            await _downloadPdf(r);
+                            await _downloadPdf(r); // auto-save to file manager
                           }
                         },
                       ),
@@ -387,7 +457,7 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
   }
 }
 
-/* ---------------- Filters Bar ---------------- */
+/* ---------------- Filters Bar (unchanged visuals) ---------------- */
 
 class _FiltersBar extends StatelessWidget {
   const _FiltersBar({required this.s, required this.active, required this.onChanged});
@@ -443,7 +513,7 @@ class _FiltersBar extends StatelessWidget {
   }
 }
 
-/* ---------------- Report Card ---------------- */
+/* ---------------- Report Card (unchanged visuals) ---------------- */
 
 class _ReportCard extends StatelessWidget {
   const _ReportCard({
@@ -464,9 +534,7 @@ class _ReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Always enabled now
     final canTap = onDownload != null;
-
     final label = downloaded ? 'Download\nAgain' : 'Download\nFull Report';
 
     return Container(
@@ -534,8 +602,8 @@ class _ReportCard extends StatelessWidget {
                   SizedBox(height: 4 * s),
                   Row(
                     children: [
-                      Icon(Icons.directions_car_filled_rounded, size: 16 * s, color: const Color(0xFF6B7280)),
-                      SizedBox(width: 6 * s),
+                  //    Icon(Icons.directions_car_filled_rounded, size: 16 * s, color: const Color(0xFF6B7280)),
+                 //     SizedBox(width: 6 * s),
                       Flexible(
                         child: Text(
                           'Order: $vehicleText',
@@ -545,17 +613,17 @@ class _ReportCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  SizedBox(height: 4 * s),
-                  Row(
-                    children: [
-                      Icon(Icons.circle, size: 10 * s, color: const Color(0xFF22C55E)),
-                      SizedBox(width: 6 * s),
-                      Text(
-                        'Status: ${completed ? 'Completed' : 'Pending'}',
-                        style: TextStyle(color: const Color(0xFF10B981), fontSize: 12.5 * s, fontWeight: FontWeight.w700),
-                      ),
-                    ],
-                  ),
+                 // SizedBox(height: 2 * s),
+                  // Row(
+                  //   children: [
+                  //     Icon(Icons.circle, size: 10 * s, color: const Color(0xFF22C55E)),
+                  //     SizedBox(width: 6 * s),
+                  //     Text(
+                  //       'Status: ${completed ? 'Completed' : 'Pending'}',
+                  //       style: TextStyle(color: const Color(0xFF10B981), fontSize: 12.5 * s, fontWeight: FontWeight.w700),
+                  //     ),
+                  //   ],
+                  // ),
                 ],
               ),
             ),
@@ -634,473 +702,3 @@ class _DownloadPill extends StatelessWidget {
 }
 
 
-// class ReportHistoryScreen extends StatefulWidget {
-//   const ReportHistoryScreen({super.key});
-//   @override
-//   State<ReportHistoryScreen> createState() => _ReportHistoryScreenState();
-// }
-
-// enum _Filter { all, today, last7, thisMonth }
-
-// class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
-//   _Filter _filter = _Filter.all;
-
-//   // loaded from OrdersStorage
-//   List<OrderRecord> _orders = [];
-//   bool _loading = true;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _loadOrders();
-//   }
-
-//   Future<void> _loadOrders() async {
-//     final list = await OrdersStorage().listOrders();
-//     if (!mounted) return;
-//     setState(() {
-//       _orders = list;
-//       _loading = false;
-//     });
-//   }
-
-//   List<OrderRecord> get _filtered {
-//     final now = DateTime.now();
-//     switch (_filter) {
-//       case _Filter.all:
-//         return _orders;
-//       case _Filter.today:
-//         return _orders.where((e) =>
-//           e.createdAt.year == now.year &&
-//           e.createdAt.month == now.month &&
-//           e.createdAt.day == now.day).toList();
-//       case _Filter.last7:
-//         final from = now.subtract(const Duration(days: 7));
-//         return _orders.where((e) => e.createdAt.isAfter(from)).toList();
-//       case _Filter.thisMonth:
-//         return _orders.where((e) =>
-//           e.createdAt.year == now.year &&
-//           e.createdAt.month == now.month).toList();
-//     }
-//   }
-
-//   String _prettyDate(DateTime d) {
-//     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-//     final hh = d.hour % 12 == 0 ? 12 : d.hour % 12;
-//     final mm = d.minute.toString().padLeft(2, '0');
-//     final am = d.hour >= 12 ? 'PM' : 'AM';
-//     return '${d.day} ${months[d.month - 1]}, ${d.year}  —  $hh:$mm $am';
-//   }
-
-//   /// Use the saved title if present; otherwise build "First item +N more"
-//   String _orderTitle(OrderRecord r) {
-//     if ((r.title ?? '').trim().isNotEmpty) return r.title!.trim();
-//     if (r.lines.isEmpty) return 'No items';
-//     final first = r.lines.first;
-//     final name = '${first['name'] ?? 'Item'}';
-//     final more = r.lines.length - 1;
-//     return more > 0 ? '$name +$more more' : name;
-//   }
-
-//   Future<void> _onDownloadOrder(OrderRecord r) async {
-//     final ok = await _showDownloadDialog(context);
-//     if (ok == true) {
-//       await OrdersStorage().setDownloaded(r.id, true);
-//       // reflect in UI without reloading entire list
-//       final i = _orders.indexWhere((e) => e.id == r.id);
-//       if (i >= 0 && mounted) {
-//         setState(() => _orders[i] = _orders[i].copyWith(downloaded: true));
-//       }
-//     }
-//   }
-
-//   /// Same dialog UI as your code, but returns bool (true on Download)
-//   Future<bool?> _showDownloadDialog(BuildContext context) {
-//     return showGeneralDialog<bool>(
-//       context: context,
-//       barrierDismissible: true,
-//       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-//       barrierColor: Colors.black54,
-//       transitionDuration: const Duration(milliseconds: 250),
-//       pageBuilder: (context, animation, secondaryAnimation) {
-//         return Center(
-//           child: Material(
-//             color: Colors.transparent,
-//             child: Container(
-//               width: 320,
-//               padding: const EdgeInsets.all(16),
-//               decoration: BoxDecoration(
-//                 color: Colors.white,
-//                 borderRadius: BorderRadius.circular(16),
-//               ),
-//               child: Column(
-//                 mainAxisSize: MainAxisSize.min,
-//                 children: [
-//                   const Text('Download report', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-//                   const SizedBox(height: 12),
-//                   const Text('Your report will be saved to Downloads.'),
-//                   const SizedBox(height: 16),
-//                   Row(
-//                     children: [
-//                       Expanded(
-//                         child: OutlinedButton(
-//                           onPressed: () => Navigator.of(context).pop(false),
-//                           child: const Text('Cancel'),
-//                         ),
-//                       ),
-//                       const SizedBox(width: 12),
-//                       Expanded(
-//                         child: ElevatedButton(
-//                           onPressed: () {
-//                             // TODO: trigger actual file write if needed
-//                             Navigator.of(context).pop(true); // <- mark as downloaded
-//                           },
-//                           child: const Text('Download'),
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         );
-//       },
-//       transitionBuilder: (context, animation, secondaryAnimation, child) {
-//         final curved = CurvedAnimation(
-//           parent: animation,
-//           curve: Curves.easeOutCubic,
-//           reverseCurve: Curves.easeInCubic,
-//         );
-//         return FadeTransition(
-//           opacity: curved,
-//           child: SlideTransition(
-//             position: Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero).animate(curved),
-//             child: child,
-//           ),
-//         );
-//       },
-//     );
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final s = MediaQuery.sizeOf(context).width / 390.0;
-//     final padBottom = MediaQuery.paddingOf(context).bottom;
-
-//     return Scaffold(
-//       backgroundColor: const Color(0xFFF6F7FA),
-//       body: SafeArea(
-//         child: Stack(
-//           children: [
-//             // content
-//             Positioned.fill(
-//               child: ListView(
-//                 padding: EdgeInsets.fromLTRB(16 * s, 8 * s, 16 * s, 140 * s + padBottom),
-//                 children: [
-//                   // AppBar row
-//                   Row(
-//                     mainAxisAlignment: MainAxisAlignment.center,
-//                     crossAxisAlignment: CrossAxisAlignment.center,
-//                     children: [
-//                       Padding(
-//                         padding: const EdgeInsets.only(left: 30.0),
-//                         child: Text(
-//                           'Report History',
-//                           textAlign: TextAlign.center,
-//                           style: TextStyle(
-//                             fontFamily: 'ClashGrotesk',
-//                             fontSize: 20 * s,
-//                             fontWeight: FontWeight.w900,
-//                             color: const Color(0xFF0F172A),
-//                           ),
-//                         ),
-//                       ),
-//                       const SizedBox(width: 48),
-//                     ],
-//                   ),
-//                   SizedBox(height: 10 * s),
-
-//                   // Filters
-//                   _FiltersBar(
-//                     s: s,
-//                     active: _filter,
-//                     onChanged: (f) => setState(() => _filter = f),
-//                   ),
-//                   SizedBox(height: 16 * s),
-
-//                   if (_loading)
-//                     Padding(
-//                       padding: EdgeInsets.only(top: 40 * s),
-//                       child: const Center(child: CircularProgressIndicator()),
-//                     )
-//                   else
-//                     ..._filtered.map((r) => Padding(
-//                           padding: EdgeInsets.only(bottom: 12 * s),
-//                           child: _ReportCard(
-//                             s: s,
-//                             dateText: _prettyDate(r.createdAt),
-//                             // keep the design; we feed the order summary as the "vehicle" text
-//                             vehicleText: _orderTitle(r),
-//                             completed: true,
-//                             downloaded: r.downloaded,
-//                             onDownload: !r.downloaded ? () => _onDownloadOrder(r) : null,
-//                           ),
-//                         )),
-//                   // (Removed the hardcoded faint sample card)
-//                 ],
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-// /* ---------------- Filters / Card / Pills (unchanged design) ---------------- */
-
-// class _FiltersBar extends StatelessWidget {
-//   const _FiltersBar({required this.s, required this.active, required this.onChanged});
-//   final double s;
-//   final _Filter active;
-//   final ValueChanged<_Filter> onChanged;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     Widget chip(_Filter f, String label) {
-//       final isActive = f == active;
-//       return GestureDetector(
-//         onTap: () => onChanged(f),
-//         child: Container(
-//           padding: EdgeInsets.symmetric(horizontal: 14 * s, vertical: 8 * s),
-//           decoration: BoxDecoration(
-//             borderRadius: BorderRadius.circular(999),
-//             gradient: isActive
-//                 ? const LinearGradient(colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)])
-//                 : null,
-//             color: isActive ? null : const Color(0xFFEFF2F8),
-//           ),
-//           child: Text(
-//             label,
-//             style: TextStyle(
-//               fontFamily: 'ClashGrotesk',
-//               fontWeight: FontWeight.w800,
-//               color: isActive ? Colors.white : const Color(0xFF111827),
-//               fontSize: 13 * s,
-//             ),
-//           ),
-//         ),
-//       );
-//     }
-
-//     return Container(
-//       padding: EdgeInsets.all(8 * s),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(12 * s),
-//         boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 12, offset: Offset(0, 6))],
-//       ),
-//       child: Row(
-//         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//         children: [
-//           chip(_Filter.all, 'All'),
-//           chip(_Filter.today, 'Today'),
-//           chip(_Filter.last7, 'Last 7 Days'),
-//           chip(_Filter.thisMonth, 'This Month'),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// class _ReportCard extends StatelessWidget {
-//   const _ReportCard({
-//     required this.s,
-//     required this.dateText,
-//     required this.vehicleText,
-//     required this.completed,
-//     required this.downloaded,
-//     required this.onDownload,
-//   });
-
-//   final double s;
-//   final String dateText;
-//   final String vehicleText;
-//   final bool completed;
-//   final bool downloaded;
-//   final VoidCallback? onDownload;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final canTap = onDownload != null;
-
-//     return Container(
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(12 * s),
-//         boxShadow: const [BoxShadow(color: Color(0x12000000), blurRadius: 10, offset: Offset(0, 6))],
-//       ),
-//       child: Row(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           // gradient spine
-//           Container(
-//             width: 9 * s,
-//             height: 131 * s,
-//             decoration: const BoxDecoration(
-//               borderRadius: BorderRadius.only(
-//                 topLeft: Radius.circular(12),
-//                 bottomLeft: Radius.circular(12),
-//               ),
-//               gradient: LinearGradient(
-//                 colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
-//                 begin: Alignment.topCenter,
-//                 end: Alignment.bottomCenter,
-//               ),
-//             ),
-//           ),
-//           Expanded(
-//             child: Padding(
-//               padding: EdgeInsets.fromLTRB(12 * s, 10 * s, 12 * s, 10 * s),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   // title row + action button
-//                   Row(
-//                     children: [
-//                       Expanded(
-//                         child: Text(
-//                           'Report Generated',
-//                           style: TextStyle(
-//                             fontFamily: 'ClashGrotesk',
-//                             fontWeight: FontWeight.w900,
-//                             color: const Color(0xFF0F172A),
-//                             fontSize: 16 * s,
-//                           ),
-//                         ),
-//                       ),
-//                       _DownloadPill(
-//                         s: s,
-//                         enabled: canTap,
-//                         downloaded: downloaded,
-//                         onTap: onDownload,
-//                       ),
-//                     ],
-//                   ),
-//                   SizedBox(height: 6 * s),
-//                   Row(
-//                     children: [
-//                       Icon(Icons.event_note_rounded, size: 16 * s, color: const Color(0xFF6B7280)),
-//                       SizedBox(width: 6 * s),
-//                       Text(
-//                         dateText,
-//                         style: TextStyle(color: const Color(0xFF6B7280), fontSize: 12.5 * s),
-//                       ),
-//                     ],
-//                   ),
-//                   SizedBox(height: 4 * s),
-//                   Row(
-//                     children: [
-//                       Icon(Icons.directions_car_filled_rounded, size: 16 * s, color: const Color(0xFF6B7280)),
-//                       SizedBox(width: 6 * s),
-//                       Flexible(
-//                         child: Text(
-//                           // design kept as "Vehicle:", but we inject the order summary text
-//                           'Vehicle: $vehicleText',
-//                           style: TextStyle(color: const Color(0xFF6B7280), fontSize: 12.5 * s),
-//                           overflow: TextOverflow.ellipsis,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                   SizedBox(height: 4 * s),
-//                   Row(
-//                     children: [
-//                       Icon(Icons.circle, size: 10 * s, color: const Color(0xFF22C55E)),
-//                       SizedBox(width: 6 * s),
-//                       Text(
-//                         'Status: ${completed ? 'Completed' : 'Pending'}',
-//                         style: TextStyle(color: const Color(0xFF10B981), fontSize: 12.5 * s, fontWeight: FontWeight.w700),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// class _DownloadPill extends StatelessWidget {
-//   const _DownloadPill({
-//     required this.s,
-//     required this.enabled,
-//     required this.downloaded,
-//     required this.onTap,
-//   });
-
-//   final double s;
-//   final bool enabled;
-//   final bool downloaded;
-//   final VoidCallback? onTap;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final label = downloaded ? 'Downloaded' : 'Download\nFull Report';
-//     final pill = Container(
-//       padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 8 * s),
-//       decoration: BoxDecoration(
-//         borderRadius: BorderRadius.circular(12 * s),
-//         color: enabled ? null : const Color(0xFFF1F5F9),
-//         gradient: enabled ? const LinearGradient(colors: [Color(0xFFEEF6FF), Color(0xFFEFF1FF)]) : null,
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.black.withOpacity(.05),
-//             blurRadius: 8,
-//             offset: const Offset(0, 4),
-//           ),
-//         ],
-//       ),
-//       child: Row(
-//         mainAxisSize: MainAxisSize.min,
-//         children: [
-//           Container(
-//             width: 30 * s,
-//             height: 30 * s,
-//             decoration: BoxDecoration(
-//               shape: BoxShape.circle,
-//               gradient: enabled ? const LinearGradient(colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)]) : null,
-//               color: enabled ? null : const Color(0xFFE2E8F0),
-//             ),
-//             child: Icon(Icons.picture_as_pdf_rounded, size: 19 * s, color: enabled ? Colors.white : const Color(0xFF6B7280)),
-//           ),
-//           SizedBox(width: 8 * s),
-//           Text(
-//             label,
-//             textAlign: TextAlign.right,
-//             style: TextStyle(
-//               fontFamily: 'ClashGrotesk',
-//               fontWeight: FontWeight.w800,
-//               color: const Color(0xFF111827),
-//               fontSize: 11.5 * s,
-//               height: 1.0,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-
-//     return Opacity(
-//       opacity: enabled ? 1 : .5,
-//       child: GestureDetector(
-//         onTap: enabled ? onTap : null,
-//         behavior: HitTestBehavior.opaque,
-//         child: pill,
-//       ),
-//     );
-//   }
-// }
