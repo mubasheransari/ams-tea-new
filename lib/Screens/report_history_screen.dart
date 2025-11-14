@@ -4,6 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:new_amst_flutter/Screens/home_screen.dart';
 import 'package:new_amst_flutter/Screens/location_google_maos.dart' hide BottomTab;
 import 'package:new_amst_flutter/Screens/products.dart';
+import 'dart:typed_data';
+import 'package:get_storage/get_storage.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+
+import 'dart:typed_data';
+import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
+
+// import your OrderRecord & OrdersStorage
+// import 'orders_storage.dart';
 
 class ReportHistoryScreen extends StatefulWidget {
   const ReportHistoryScreen({super.key});
@@ -12,11 +27,12 @@ class ReportHistoryScreen extends StatefulWidget {
 }
 
 enum _Filter { all, today, last7, thisMonth }
+enum _DlgAction { view, download }
 
 class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
   _Filter _filter = _Filter.all;
 
-  // loaded from OrdersStorage
+  final GetStorage _box = GetStorage();
   List<OrderRecord> _orders = [];
   bool _loading = true;
 
@@ -24,6 +40,10 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
   void initState() {
     super.initState();
     _loadOrders();
+    _box.listenKey('local_orders', (_) {
+      if (!mounted) return;
+      _loadOrders();
+    });
   }
 
   Future<void> _loadOrders() async {
@@ -42,28 +62,27 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
         return _orders;
       case _Filter.today:
         return _orders.where((e) =>
-          e.createdAt.year == now.year &&
-          e.createdAt.month == now.month &&
-          e.createdAt.day == now.day).toList();
+            e.createdAt.year == now.year &&
+            e.createdAt.month == now.month &&
+            e.createdAt.day == now.day).toList();
       case _Filter.last7:
         final from = now.subtract(const Duration(days: 7));
         return _orders.where((e) => e.createdAt.isAfter(from)).toList();
       case _Filter.thisMonth:
         return _orders.where((e) =>
-          e.createdAt.year == now.year &&
-          e.createdAt.month == now.month).toList();
+            e.createdAt.year == now.year &&
+            e.createdAt.month == now.month).toList();
     }
   }
 
   String _prettyDate(DateTime d) {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     final hh = d.hour % 12 == 0 ? 12 : d.hour % 12;
     final mm = d.minute.toString().padLeft(2, '0');
     final am = d.hour >= 12 ? 'PM' : 'AM';
-    return '${d.day} ${months[d.month - 1]}, ${d.year}  —  $hh:$mm $am';
+    return '${d.day} ${m[d.month - 1]}, ${d.year}  —  $hh:$mm $am';
   }
 
-  /// Use the saved title if present; otherwise build "First item +N more"
   String _orderTitle(OrderRecord r) {
     if ((r.title ?? '').trim().isNotEmpty) return r.title!.trim();
     if (r.lines.isEmpty) return 'No items';
@@ -73,21 +92,157 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
     return more > 0 ? '$name +$more more' : name;
   }
 
-  Future<void> _onDownloadOrder(OrderRecord r) async {
-    final ok = await _showDownloadDialog(context);
-    if (ok == true) {
-      await OrdersStorage().setDownloaded(r.id, true);
-      // reflect in UI without reloading entire list
-      final i = _orders.indexWhere((e) => e.id == r.id);
-      if (i >= 0 && mounted) {
-        setState(() => _orders[i] = _orders[i].copyWith(downloaded: true));
-      }
-    }
+  // NEW: preview PDF (can be done unlimited times)
+  Future<void> _viewPdf(OrderRecord r) async {
+    final bytes = await _buildPdfBytes(r);
+    await Printing.layoutPdf(onLayout: (format) async => bytes);
   }
 
-  /// Same dialog UI as your code, but returns bool (true on Download)
-  Future<bool?> _showDownloadDialog(BuildContext context) {
-    return showGeneralDialog<bool>(
+  // Download/share PDF (can be done unlimited times)
+  Future<void> _downloadPdf(OrderRecord r) async {
+    final bytes = await _buildPdfBytes(r); // Uint8List
+    final fname = 'order_${r.id}.pdf';
+    await Printing.sharePdf(bytes: bytes, filename: fname);
+
+    // Optional: mark as downloaded just for badge/label (no restriction applied)
+    await OrdersStorage().setDownloaded(r.id, true);
+    if (!mounted) return;
+    final i = _orders.indexWhere((e) => e.id == r.id);
+    if (i >= 0) setState(() => _orders[i] = _orders[i].copyWith(downloaded: true));
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('PDF ready: $fname')),
+    );
+  }
+
+  Future<Uint8List> _buildPdfBytes(OrderRecord r) async {
+    final pdf = pw.Document();
+
+    final title = (r.title?.trim().isNotEmpty ?? false) ? r.title!.trim() : _orderTitle(r);
+
+    final rows = <pw.TableRow>[
+      pw.TableRow(
+        decoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFEFF2F8)),
+        children: [
+          _cell('No.', bold: true),
+          _cell('Product', bold: true),
+          _cell('Brand', bold: true),
+          _cellRight('Qty', bold: true),
+        ],
+      ),
+    ];
+
+    int i = 1;
+    int totalQty = 0;
+    for (final line in r.lines) {
+      final name = '${line['name'] ?? ''}';
+      final brand = '${line['brand'] ?? ''}';
+      final qty = (line['qty'] is int)
+          ? line['qty'] as int
+          : int.tryParse('${line['qty']}') ?? 0;
+      totalQty += qty;
+      rows.add(
+        pw.TableRow(
+          children: [
+            _cell('$i'),
+            _cell(name),
+            _cell(brand),
+            _cellRight('$qty'),
+          ],
+        ),
+      );
+      i++;
+    }
+
+    pdf.addPage(
+      pw.MultiPage(
+        margin: const pw.EdgeInsets.all(28),
+        build: (ctx) => [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text('Order Summary', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                  if (r.shopName != null && r.shopName!.isNotEmpty)
+                    pw.Text(r.shopName!, style: const pw.TextStyle(fontSize: 12)),
+                  pw.SizedBox(height: 4),
+                  pw.Text(_prettyDate(r.createdAt), style: const pw.TextStyle(fontSize: 10)),
+                  pw.SizedBox(height: 8),
+                  pw.Text(title, style: const pw.TextStyle(fontSize: 12)),
+                ],
+              ),
+              pw.Container(
+                padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: pw.BoxDecoration(
+                  color: PdfColor.fromInt(0xFFDCE7FF),
+                  borderRadius: pw.BorderRadius.circular(6),
+                ),
+                child: pw.Text('ID: ${r.id}', style: const pw.TextStyle(fontSize: 10)),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 16),
+          pw.Table(
+            border: pw.TableBorder.all(color: PdfColor.fromInt(0xFFE5E7EB), width: .6),
+            defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle,
+            children: rows,
+          ),
+          pw.SizedBox(height: 10),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.end,
+            children: [
+              pw.Container(
+                padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: pw.BoxDecoration(
+                  color: PdfColor.fromInt(0xFFEFF1FF),
+                  borderRadius: pw.BorderRadius.circular(6),
+                ),
+                child: pw.Text('Total Qty: $totalQty', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 8),
+          pw.Divider(),
+          pw.SizedBox(height: 6),
+          pw.Text('Generated by Meezan Sales App', style: const pw.TextStyle(fontSize: 9)),
+        ],
+      ),
+    );
+
+    final raw = await pdf.save();        // List<int>
+    return Uint8List.fromList(raw);      // return Uint8List
+  }
+
+  pw.Widget _cell(String text, {bool bold = false}) => pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: pw.Text(
+          text,
+          style: pw.TextStyle(
+            fontSize: 10,
+            fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+          ),
+        ),
+      );
+
+  pw.Widget _cellRight(String text, {bool bold = false}) => pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: pw.Align(
+          alignment: pw.Alignment.centerRight,
+          child: pw.Text(
+            text,
+            style: pw.TextStyle(
+              fontSize: 10,
+              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+            ),
+          ),
+        ),
+      );
+
+  Future<_DlgAction?> _showActionDialog(BuildContext context) {
+    return showGeneralDialog<_DlgAction>(
       context: context,
       barrierDismissible: true,
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
@@ -101,32 +256,29 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
               width: 320,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
+                color: Colors.white, borderRadius: BorderRadius.circular(16)),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Download report', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  const Text('Report', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 12),
-                  const Text('Your report will be saved to Downloads.'),
+                  const Text('View or download a PDF for this order.'),
                   const SizedBox(height: 16),
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('Cancel'),
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.visibility_rounded),
+                          onPressed: () => Navigator.of(context).pop(_DlgAction.view),
+                          label: const Text('View'),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // TODO: trigger actual file write if needed
-                            Navigator.of(context).pop(true); // <- mark as downloaded
-                          },
-                          child: const Text('Download'),
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.download_rounded),
+                          onPressed: () => Navigator.of(context).pop(_DlgAction.download),
+                          label: const Text('Download'),
                         ),
                       ),
                     ],
@@ -162,74 +314,80 @@ class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FA),
       body: SafeArea(
-        child: Stack(
-          children: [
-            // content
-            Positioned.fill(
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(16 * s, 8 * s, 16 * s, 140 * s + padBottom),
+        child: RefreshIndicator(
+          onRefresh: _loadOrders,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(16 * s, 8 * s, 16 * s, 140 * s + padBottom),
+            children: [
+              // Title
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // AppBar row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 30.0),
-                        child: Text(
-                          'Report History',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'ClashGrotesk',
-                            fontSize: 20 * s,
-                            fontWeight: FontWeight.w900,
-                            color: const Color(0xFF0F172A),
-                          ),
-                        ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 30.0),
+                    child: Text(
+                      'Report History',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'ClashGrotesk',
+                        fontSize: 20 * s,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF0F172A),
                       ),
-                      const SizedBox(width: 48),
-                    ],
+                    ),
                   ),
-                  SizedBox(height: 10 * s),
-
-                  // Filters
-                  _FiltersBar(
-                    s: s,
-                    active: _filter,
-                    onChanged: (f) => setState(() => _filter = f),
-                  ),
-                  SizedBox(height: 16 * s),
-
-                  if (_loading)
-                    Padding(
-                      padding: EdgeInsets.only(top: 40 * s),
-                      child: const Center(child: CircularProgressIndicator()),
-                    )
-                  else
-                    ..._filtered.map((r) => Padding(
-                          padding: EdgeInsets.only(bottom: 12 * s),
-                          child: _ReportCard(
-                            s: s,
-                            dateText: _prettyDate(r.createdAt),
-                            // keep the design; we feed the order summary as the "vehicle" text
-                            vehicleText: _orderTitle(r),
-                            completed: true,
-                            downloaded: r.downloaded,
-                            onDownload: !r.downloaded ? () => _onDownloadOrder(r) : null,
-                          ),
-                        )),
-                  // (Removed the hardcoded faint sample card)
+                  const SizedBox(width: 48),
                 ],
               ),
-            ),
-          ],
+              SizedBox(height: 10 * s),
+
+              _FiltersBar(
+                s: s,
+                active: _filter,
+                onChanged: (f) => setState(() => _filter = f),
+              ),
+              SizedBox(height: 16 * s),
+
+              if (_loading)
+                Padding(
+                  padding: EdgeInsets.only(top: 40 * s),
+                  child: const Center(child: CircularProgressIndicator()),
+                )
+              else if (_filtered.isEmpty)
+                Padding(
+                  padding: EdgeInsets.only(top: 40 * s),
+                  child: const Center(child: Text('No reports yet')),
+                )
+              else
+                ..._filtered.map((r) => Padding(
+                      padding: EdgeInsets.only(bottom: 12 * s),
+                      child: _ReportCard(
+                        s: s,
+                        dateText: _prettyDate(r.createdAt),
+                        vehicleText: _orderTitle(r), // shows order summary
+                        completed: true,
+                        // NOTE: button is ALWAYS enabled now
+                        downloaded: r.downloaded,
+                        onDownload: () async {
+                          final act = await _showActionDialog(context);
+                          if (act == _DlgAction.view) {
+                            await _viewPdf(r);
+                          } else if (act == _DlgAction.download) {
+                            await _downloadPdf(r);
+                          }
+                        },
+                      ),
+                    )),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/* ---------------- Filters / Card / Pills (unchanged design) ---------------- */
+/* ---------------- Filters Bar ---------------- */
 
 class _FiltersBar extends StatelessWidget {
   const _FiltersBar({required this.s, required this.active, required this.onChanged});
@@ -285,6 +443,8 @@ class _FiltersBar extends StatelessWidget {
   }
 }
 
+/* ---------------- Report Card ---------------- */
+
 class _ReportCard extends StatelessWidget {
   const _ReportCard({
     required this.s,
@@ -304,7 +464,10 @@ class _ReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Always enabled now
     final canTap = onDownload != null;
+
+    final label = downloaded ? 'Download\nAgain' : 'Download\nFull Report';
 
     return Container(
       decoration: BoxDecoration(
@@ -326,9 +489,7 @@ class _ReportCard extends StatelessWidget {
               ),
               gradient: LinearGradient(
                 colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+                begin: Alignment.topCenter, end: Alignment.bottomCenter),
             ),
           ),
           Expanded(
@@ -354,7 +515,7 @@ class _ReportCard extends StatelessWidget {
                       _DownloadPill(
                         s: s,
                         enabled: canTap,
-                        downloaded: downloaded,
+                        label: label,
                         onTap: onDownload,
                       ),
                     ],
@@ -377,8 +538,7 @@ class _ReportCard extends StatelessWidget {
                       SizedBox(width: 6 * s),
                       Flexible(
                         child: Text(
-                          // design kept as "Vehicle:", but we inject the order summary text
-                          'Vehicle: $vehicleText',
+                          'Order: $vehicleText',
                           style: TextStyle(color: const Color(0xFF6B7280), fontSize: 12.5 * s),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -410,24 +570,22 @@ class _DownloadPill extends StatelessWidget {
   const _DownloadPill({
     required this.s,
     required this.enabled,
-    required this.downloaded,
+    required this.label,
     required this.onTap,
   });
 
   final double s;
   final bool enabled;
-  final bool downloaded;
+  final String label;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final label = downloaded ? 'Downloaded' : 'Download\nFull Report';
     final pill = Container(
       padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 8 * s),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12 * s),
-        color: enabled ? null : const Color(0xFFF1F5F9),
-        gradient: enabled ? const LinearGradient(colors: [Color(0xFFEEF6FF), Color(0xFFEFF1FF)]) : null,
+        gradient: const LinearGradient(colors: [Color(0xFFEEF6FF), Color(0xFFEFF1FF)]),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(.05),
@@ -442,12 +600,11 @@ class _DownloadPill extends StatelessWidget {
           Container(
             width: 30 * s,
             height: 30 * s,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              gradient: enabled ? const LinearGradient(colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)]) : null,
-              color: enabled ? null : const Color(0xFFE2E8F0),
+              gradient: LinearGradient(colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)]),
             ),
-            child: Icon(Icons.picture_as_pdf_rounded, size: 19 * s, color: enabled ? Colors.white : const Color(0xFF6B7280)),
+            child: const Icon(Icons.picture_as_pdf_rounded, size: 19, color: Colors.white),
           ),
           SizedBox(width: 8 * s),
           Text(
@@ -476,8 +633,6 @@ class _DownloadPill extends StatelessWidget {
   }
 }
 
-/* (Your _DockIcon and _DownloadDialog remain unchanged if you keep them) */
-
 
 // class ReportHistoryScreen extends StatefulWidget {
 //   const ReportHistoryScreen({super.key});
@@ -487,56 +642,145 @@ class _DownloadPill extends StatelessWidget {
 
 // enum _Filter { all, today, last7, thisMonth }
 
-// class _Item {
-//   final DateTime when;
-//   final String vehicle;
-//   final bool completed;
-//   bool downloaded;
-//   _Item(this.when, this.vehicle, {this.completed = true, this.downloaded = false});
-// }
-
 // class _ReportHistoryScreenState extends State<ReportHistoryScreen> {
 //   _Filter _filter = _Filter.all;
 
-//   // sample data
-//   late final List<_Item> _all = List.generate(6, (i) {
-//     final now = DateTime.now();
-//     return _Item(
-//       now.subtract(Duration(days: i * 2)),
-//       'Toyota Corolla (ABC-123)',
-//       completed: true,
-//       downloaded: i == 4, // one is already downloaded
-//     );
-//   });
+//   // loaded from OrdersStorage
+//   List<OrderRecord> _orders = [];
+//   bool _loading = true;
 
-//   List<_Item> get _filtered {
+//   @override
+//   void initState() {
+//     super.initState();
+//     _loadOrders();
+//   }
+
+//   Future<void> _loadOrders() async {
+//     final list = await OrdersStorage().listOrders();
+//     if (!mounted) return;
+//     setState(() {
+//       _orders = list;
+//       _loading = false;
+//     });
+//   }
+
+//   List<OrderRecord> get _filtered {
 //     final now = DateTime.now();
 //     switch (_filter) {
 //       case _Filter.all:
-//         return _all;
+//         return _orders;
 //       case _Filter.today:
-//         return _all.where((e) =>
-//             e.when.year == now.year &&
-//             e.when.month == now.month &&
-//             e.when.day == now.day).toList();
+//         return _orders.where((e) =>
+//           e.createdAt.year == now.year &&
+//           e.createdAt.month == now.month &&
+//           e.createdAt.day == now.day).toList();
 //       case _Filter.last7:
 //         final from = now.subtract(const Duration(days: 7));
-//         return _all.where((e) => e.when.isAfter(from)).toList();
+//         return _orders.where((e) => e.createdAt.isAfter(from)).toList();
 //       case _Filter.thisMonth:
-//         return _all.where((e) =>
-//             e.when.year == now.year &&
-//             e.when.month == now.month).toList();
+//         return _orders.where((e) =>
+//           e.createdAt.year == now.year &&
+//           e.createdAt.month == now.month).toList();
 //     }
 //   }
 
 //   String _prettyDate(DateTime d) {
-//     const months = [
-//       'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
-//     ];
+//     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 //     final hh = d.hour % 12 == 0 ? 12 : d.hour % 12;
 //     final mm = d.minute.toString().padLeft(2, '0');
 //     final am = d.hour >= 12 ? 'PM' : 'AM';
 //     return '${d.day} ${months[d.month - 1]}, ${d.year}  —  $hh:$mm $am';
+//   }
+
+//   /// Use the saved title if present; otherwise build "First item +N more"
+//   String _orderTitle(OrderRecord r) {
+//     if ((r.title ?? '').trim().isNotEmpty) return r.title!.trim();
+//     if (r.lines.isEmpty) return 'No items';
+//     final first = r.lines.first;
+//     final name = '${first['name'] ?? 'Item'}';
+//     final more = r.lines.length - 1;
+//     return more > 0 ? '$name +$more more' : name;
+//   }
+
+//   Future<void> _onDownloadOrder(OrderRecord r) async {
+//     final ok = await _showDownloadDialog(context);
+//     if (ok == true) {
+//       await OrdersStorage().setDownloaded(r.id, true);
+//       // reflect in UI without reloading entire list
+//       final i = _orders.indexWhere((e) => e.id == r.id);
+//       if (i >= 0 && mounted) {
+//         setState(() => _orders[i] = _orders[i].copyWith(downloaded: true));
+//       }
+//     }
+//   }
+
+//   /// Same dialog UI as your code, but returns bool (true on Download)
+//   Future<bool?> _showDownloadDialog(BuildContext context) {
+//     return showGeneralDialog<bool>(
+//       context: context,
+//       barrierDismissible: true,
+//       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+//       barrierColor: Colors.black54,
+//       transitionDuration: const Duration(milliseconds: 250),
+//       pageBuilder: (context, animation, secondaryAnimation) {
+//         return Center(
+//           child: Material(
+//             color: Colors.transparent,
+//             child: Container(
+//               width: 320,
+//               padding: const EdgeInsets.all(16),
+//               decoration: BoxDecoration(
+//                 color: Colors.white,
+//                 borderRadius: BorderRadius.circular(16),
+//               ),
+//               child: Column(
+//                 mainAxisSize: MainAxisSize.min,
+//                 children: [
+//                   const Text('Download report', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+//                   const SizedBox(height: 12),
+//                   const Text('Your report will be saved to Downloads.'),
+//                   const SizedBox(height: 16),
+//                   Row(
+//                     children: [
+//                       Expanded(
+//                         child: OutlinedButton(
+//                           onPressed: () => Navigator.of(context).pop(false),
+//                           child: const Text('Cancel'),
+//                         ),
+//                       ),
+//                       const SizedBox(width: 12),
+//                       Expanded(
+//                         child: ElevatedButton(
+//                           onPressed: () {
+//                             // TODO: trigger actual file write if needed
+//                             Navigator.of(context).pop(true); // <- mark as downloaded
+//                           },
+//                           child: const Text('Download'),
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ),
+//         );
+//       },
+//       transitionBuilder: (context, animation, secondaryAnimation, child) {
+//         final curved = CurvedAnimation(
+//           parent: animation,
+//           curve: Curves.easeOutCubic,
+//           reverseCurve: Curves.easeInCubic,
+//         );
+//         return FadeTransition(
+//           opacity: curved,
+//           child: SlideTransition(
+//             position: Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero).animate(curved),
+//             child: child,
+//           ),
+//         );
+//       },
+//     );
 //   }
 
 //   @override
@@ -552,19 +796,15 @@ class _DownloadPill extends StatelessWidget {
 //             // content
 //             Positioned.fill(
 //               child: ListView(
-//                 padding: EdgeInsets.fromLTRB(16 * s, 8 * s, 16 * s, 140 * s),
+//                 padding: EdgeInsets.fromLTRB(16 * s, 8 * s, 16 * s, 140 * s + padBottom),
 //                 children: [
 //                   // AppBar row
 //                   Row(
-//                      mainAxisAlignment: MainAxisAlignment.center,
-//                 crossAxisAlignment: CrossAxisAlignment.center,
+//                     mainAxisAlignment: MainAxisAlignment.center,
+//                     crossAxisAlignment: CrossAxisAlignment.center,
 //                     children: [
-//                       // IconButton(
-//                       //   icon: const Icon(Icons.chevron_left_rounded, size: 28),
-//                       //   onPressed: () => Navigator.pop(context),
-//                       // ),
 //                       Padding(
-//                      padding: const EdgeInsets.only(left:30.0),
+//                         padding: const EdgeInsets.only(left: 30.0),
 //                         child: Text(
 //                           'Report History',
 //                           textAlign: TextAlign.center,
@@ -576,7 +816,7 @@ class _DownloadPill extends StatelessWidget {
 //                           ),
 //                         ),
 //                       ),
-//                       const SizedBox(width: 48), // to balance back button
+//                       const SizedBox(width: 48),
 //                     ],
 //                   ),
 //                   SizedBox(height: 10 * s),
@@ -589,117 +829,36 @@ class _DownloadPill extends StatelessWidget {
 //                   ),
 //                   SizedBox(height: 16 * s),
 
-//                   // Cards
-//                   ..._filtered.map((it) => Padding(
-//                         padding: EdgeInsets.only(bottom: 12 * s),
-//                         child: _ReportCard(
-//                           s: s,
-//                           dateText: _prettyDate(it.when),
-//                           vehicleText: it.vehicle,
-//                           completed: it.completed,
-//                           downloaded: it.downloaded,
-//                           onDownload: it.completed && !it.downloaded
-//                               ? () => _showDownloadDialog(
-//                               context
-                                    
-//                                   )
-//                               : null,
-//                         ),
-//                       )),
-//                   // faint disabled sample (matches mock’s last grey card)
-//                   Opacity(
-//                     opacity: .35,
-//                     child: _ReportCard(
-//                       s: s,
-//                       dateText: _prettyDate(DateTime.now()),
-//                       vehicleText: 'Toyota Corolla (ABC-123)',
-//                       completed: true,
-//                       downloaded: true,
-//                       onDownload: null,
-//                     ),
-//                   ),
+//                   if (_loading)
+//                     Padding(
+//                       padding: EdgeInsets.only(top: 40 * s),
+//                       child: const Center(child: CircularProgressIndicator()),
+//                     )
+//                   else
+//                     ..._filtered.map((r) => Padding(
+//                           padding: EdgeInsets.only(bottom: 12 * s),
+//                           child: _ReportCard(
+//                             s: s,
+//                             dateText: _prettyDate(r.createdAt),
+//                             // keep the design; we feed the order summary as the "vehicle" text
+//                             vehicleText: _orderTitle(r),
+//                             completed: true,
+//                             downloaded: r.downloaded,
+//                             onDownload: !r.downloaded ? () => _onDownloadOrder(r) : null,
+//                           ),
+//                         )),
+//                   // (Removed the hardcoded faint sample card)
 //                 ],
 //               ),
 //             ),
-
-       
 //           ],
 //         ),
 //       ),
 //     );
 //   }
-
-//  void _showDownloadDialog(BuildContext context) {
-//   showGeneralDialog(
-//     context: context,
-//     barrierDismissible: true,
-//     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel, // <-- required
-//     barrierColor: Colors.black54,
-//     transitionDuration: const Duration(milliseconds: 250),
-//     pageBuilder: (context, animation, secondaryAnimation) {
-//       return Center(
-//         child: Material(
-//           color: Colors.transparent,
-//           child: Container(
-//             width: 320,
-//             padding: const EdgeInsets.all(16),
-//             decoration: BoxDecoration(
-//               color: Colors.white,
-//               borderRadius: BorderRadius.circular(16),
-//             ),
-//             child: Column(
-//               mainAxisSize: MainAxisSize.min,
-//               children: [
-//                 const Text('Download report', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-//                 const SizedBox(height: 12),
-//                 const Text('Your report will be saved to Downloads.'),
-//                 const SizedBox(height: 16),
-//                 Row(
-//                   children: [
-//                     Expanded(
-//                       child: OutlinedButton(
-//                         onPressed: () => Navigator.of(context).pop(),
-//                         child: const Text('Cancel'),
-//                       ),
-//                     ),
-//                     const SizedBox(width: 12),
-//                     Expanded(
-//                       child: ElevatedButton(
-//                         onPressed: () {
-//                           // TODO: trigger download
-//                           Navigator.of(context).pop();
-//                         },
-//                         child: const Text('Download'),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ),
-//       );
-//     },
-//     transitionBuilder: (context, animation, secondaryAnimation, child) {
-//       final curved = CurvedAnimation(
-//         parent: animation,
-//         curve: Curves.easeOutCubic,
-//         reverseCurve: Curves.easeInCubic,
-//       );
-//       return FadeTransition(
-//         opacity: curved,
-//         child: SlideTransition(
-//           position: Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero).animate(curved),
-//           child: child,
-//         ),
-//       );
-//     },
-//   );
 // }
 
-// }
-
-
+// /* ---------------- Filters / Card / Pills (unchanged design) ---------------- */
 
 // class _FiltersBar extends StatelessWidget {
 //   const _FiltersBar({required this.s, required this.active, required this.onChanged});
@@ -755,8 +914,6 @@ class _DownloadPill extends StatelessWidget {
 //   }
 // }
 
-// /* ---------------- Report card ---------------- */
-
 // class _ReportCard extends StatelessWidget {
 //   const _ReportCard({
 //     required this.s,
@@ -796,7 +953,11 @@ class _DownloadPill extends StatelessWidget {
 //                 topLeft: Radius.circular(12),
 //                 bottomLeft: Radius.circular(12),
 //               ),
-//               gradient: LinearGradient(colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+//               gradient: LinearGradient(
+//                 colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
+//                 begin: Alignment.topCenter,
+//                 end: Alignment.bottomCenter,
+//               ),
 //             ),
 //           ),
 //           Expanded(
@@ -845,6 +1006,7 @@ class _DownloadPill extends StatelessWidget {
 //                       SizedBox(width: 6 * s),
 //                       Flexible(
 //                         child: Text(
+//                           // design kept as "Vehicle:", but we inject the order summary text
 //                           'Vehicle: $vehicleText',
 //                           style: TextStyle(color: const Color(0xFF6B7280), fontSize: 12.5 * s),
 //                           overflow: TextOverflow.ellipsis,
@@ -893,12 +1055,8 @@ class _DownloadPill extends StatelessWidget {
 //       padding: EdgeInsets.symmetric(horizontal: 10 * s, vertical: 8 * s),
 //       decoration: BoxDecoration(
 //         borderRadius: BorderRadius.circular(12 * s),
-//         color: enabled
-//             ? null
-//             : const Color(0xFFF1F5F9),
-//         gradient: enabled
-//             ? const LinearGradient(colors: [Color(0xFFEEF6FF), Color(0xFFEFF1FF)])
-//             : null,
+//         color: enabled ? null : const Color(0xFFF1F5F9),
+//         gradient: enabled ? const LinearGradient(colors: [Color(0xFFEEF6FF), Color(0xFFEFF1FF)]) : null,
 //         boxShadow: [
 //           BoxShadow(
 //             color: Colors.black.withOpacity(.05),
@@ -915,9 +1073,7 @@ class _DownloadPill extends StatelessWidget {
 //             height: 30 * s,
 //             decoration: BoxDecoration(
 //               shape: BoxShape.circle,
-//               gradient: enabled
-//                   ? const LinearGradient(colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)])
-//                   : null,
+//               gradient: enabled ? const LinearGradient(colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)]) : null,
 //               color: enabled ? null : const Color(0xFFE2E8F0),
 //             ),
 //             child: Icon(Icons.picture_as_pdf_rounded, size: 19 * s, color: enabled ? Colors.white : const Color(0xFF6B7280)),
@@ -944,139 +1100,6 @@ class _DownloadPill extends StatelessWidget {
 //         onTap: enabled ? onTap : null,
 //         behavior: HitTestBehavior.opaque,
 //         child: pill,
-//       ),
-//     );
-//   }
-// }
-
-
-
-// class _DockIcon extends StatelessWidget {
-//   const _DockIcon({required this.icon, required this.active, required this.s});
-//   final IconData icon; final bool active; final double s;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     if (!active) {
-//       return Icon(icon, size: 24 * s, color: const Color(0xFF9AA1AE));
-//     }
-//     return Container(
-//       width: 40 * s, height: 40 * s,
-//       decoration: BoxDecoration(
-//         shape: BoxShape.circle,
-//         gradient: const LinearGradient(colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)]),
-//         boxShadow: [BoxShadow(color: const Color(0xFF7F53FD).withOpacity(.35), blurRadius: 14, offset: const Offset(0, 6))],
-//       ),
-//       child: Icon(icon, size: 22 * s, color: Colors.white),
-//     );
-//   }
-// }
-
-// /* ---------------- Download dialog ---------------- */
-
-// class _DownloadDialog extends StatelessWidget {
-//   const _DownloadDialog({required this.s, required this.onDownload, required this.onShare});
-//   final double s;
-//   final VoidCallback onDownload, onShare;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Material(
-//       color: Colors.transparent,
-//       child: Stack(
-//         clipBehavior: Clip.none,
-//         children: [
-//           // card
-//           Container(
-//             width: 300 * s,
-//             padding: EdgeInsets.fromLTRB(16 * s, 40 * s, 16 * s, 16 * s),
-//             decoration: BoxDecoration(
-//               color: Colors.white,
-//               borderRadius: BorderRadius.circular(18 * s),
-//               boxShadow: const [BoxShadow(color: Color(0x26000000), blurRadius: 18, offset: Offset(0, 10))],
-//             ),
-//             child: Column(
-//               mainAxisSize: MainAxisSize.min,
-//               children: [
-//                 Text(
-//                   'Ready to Download?',
-//                   style: TextStyle(
-//                     fontFamily: 'ClashGrotesk',
-//                     fontWeight: FontWeight.w900,
-//                     fontSize: 18 * s,
-//                     color: const Color(0xFF111827),
-//                   ),
-//                 ),
-//                 SizedBox(height: 8 * s),
-//                 Text(
-//                   'Get a detailed PDF of your wheel inspection. You can also share it directly.',
-//                   textAlign: TextAlign.center,
-//                   style: TextStyle(color: const Color(0xFF6B7280), fontSize: 13.5 * s, height: 1.35),
-//                 ),
-//                 SizedBox(height: 16 * s),
-//                 // Download button
-//                 SizedBox(
-//                   width: double.infinity,
-//                   child: ElevatedButton.icon(
-//                     onPressed: onDownload,
-//                     icon: const Icon(Icons.download_rounded),
-//                     label: Text(
-//                       'Download PDF',
-//                       style: TextStyle(
-//                         fontFamily: 'ClashGrotesk',
-//                         fontWeight: FontWeight.w800,
-//                         fontSize: 16 * s,
-//                       ),
-//                     ),
-//                     style: ElevatedButton.styleFrom(
-//                       padding: EdgeInsets.symmetric(vertical: 14 * s),
-//                       foregroundColor: Colors.white,
-//                       backgroundColor: const Color(0xFF4F7BFF),
-//                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14 * s)),
-//                     ).copyWith(
-//                       backgroundColor: WidgetStateProperty.resolveWith<Color>(
-//                         (states) => const Color(0xFF4F7BFF),
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//                 SizedBox(height: 8 * s),
-//                 // Share link
-//                 TextButton.icon(
-//                   onPressed: onShare,
-//                   icon: const Icon(Icons.ios_share_rounded),
-//                   label: Text(
-//                     'Share Report',
-//                     style: TextStyle(
-//                       fontFamily: 'ClashGrotesk',
-//                       fontWeight: FontWeight.w800,
-//                       color: const Color(0xFF4F7BFF),
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           // top floating gradient circle
-//           Positioned(
-//             top: -26 * s,
-//             left: 0,
-//             right: 0,
-//             child: Center(
-//               child: Container(
-//                 width: 64 * s,
-//                 height: 64 * s,
-//                 decoration: const BoxDecoration(
-//                   shape: BoxShape.circle,
-//                   gradient: LinearGradient(colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)]),
-//                 ),
-//                 child: const Center(
-//                   child: Icon(Icons.picture_as_pdf_rounded, color: Colors.white),
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ],
 //       ),
 //     );
 //   }
