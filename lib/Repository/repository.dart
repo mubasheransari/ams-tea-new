@@ -6,18 +6,18 @@ import 'package:new_amst_flutter/Model/getLeaveType.dart';
 import 'dart:io' show Platform;
 
 class Repository {
+  Map<String, String> get _formHeaders => const {
+    'Accept': 'application/json',
+    'Content-Type': 'application/x-www-form-urlencoded',
+  };
 
-    Map<String, String> get _formHeaders => const {
-        'Accept': 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      };
+  final registerUrl =
+      "http://teaapis.mezangrp.com/amstea/index.php?route=api/user/signup";
 
-  final registerUrl = "http://teaapis.mezangrp.com/amstea/index.php?route=api/user/signup";
-
-   final loginUrl = "http://teaapis.mezangrp.com/amstea/index.php?route=api/user/login";
-final  attendanceUrl = "http://services.zankgroup.com/amslive/index.php?route=api/most/attendance";
-   
-
+  final loginUrl =
+      "http://teaapis.mezangrp.com/amstea/index.php?route=api/user/login";
+  final attendanceUrl =
+      "http://services.zankgroup.com/amslive/index.php?route=api/most/attendance";
 
   Future<http.Response> registerUser({
     required String code,
@@ -31,10 +31,10 @@ final  attendanceUrl = "http://services.zankgroup.com/amslive/index.php?route=ap
     required String distribution,
     required String territory,
     required String channel,
-    required String latitude,   // keep as String if backend expects string
-    required String longitude,  // keep as String if backend expects string
+    required String latitude, // keep as String if backend expects string
+    required String longitude, // keep as String if backend expects string
     required String deviceId,
-    required String regToken,   // keep as String if backend expects string
+    required String regToken, // keep as String if backend expects string
   }) async {
     final payload = <String, dynamic>{
       "code": code,
@@ -55,7 +55,6 @@ final  attendanceUrl = "http://services.zankgroup.com/amslive/index.php?route=ap
     };
 
     final formBody = {"request": jsonEncode(payload)};
-    
 
     try {
       final res = await http
@@ -65,7 +64,10 @@ final  attendanceUrl = "http://services.zankgroup.com/amslive/index.php?route=ap
       return res;
     } on TimeoutException {
       return http.Response(
-        jsonEncode({"isSuccess": false, "message": "Request timed out. Please try again."}),
+        jsonEncode({
+          "isSuccess": false,
+          "message": "Request timed out. Please try again.",
+        }),
         408,
       );
     } catch (e, st) {
@@ -77,15 +79,15 @@ final  attendanceUrl = "http://services.zankgroup.com/amslive/index.php?route=ap
     }
   }
 
-
   static ({bool ok, String message}) parseApiMessage(String body, int status) {
     try {
       final obj = jsonDecode(body);
       // Handle common shapes
       if (obj is Map) {
-        final msg = (obj['message'] ?? obj['Message'] ?? obj['msg'] ?? '').toString();
-        final ok = (obj['isSuccess'] == true) ||
-            (status >= 200 && status < 300);
+        final msg = (obj['message'] ?? obj['Message'] ?? obj['msg'] ?? '')
+            .toString();
+        final ok =
+            (obj['isSuccess'] == true) || (status >= 200 && status < 300);
         return (ok: ok, message: msg.isEmpty ? 'Done' : msg);
       }
     } catch (_) {}
@@ -95,18 +97,18 @@ final  attendanceUrl = "http://services.zankgroup.com/amslive/index.php?route=ap
   }
 
   Future<http.Response> submitAttendance({
-    required int type,                // 1
-    required String code,             // "4310"
-    required String latitude,         // "24.8871334"
-    required String longitude,        // "66.9788572"
-    required String deviceId,         // "3d61adab1be4b2f2"
-    required String actType,          // "ATTENDANCE"
-    required String action,           // "IN" | "OUT"
-    required String attTime,          // "13:06:57"
-    required String attDate,          // "24-Jun-2025"
-    required String remarks,          // "0"
-    required String appVersion,       // "1.1"
-    required String regtoken,         // "0"
+    required int type, // 1
+    required String code, // "4310"
+    required String latitude, // "24.8871334"
+    required String longitude, // "66.9788572"
+    required String deviceId, // "3d61adab1be4b2f2"
+    required String actType, // "ATTENDANCE"
+    required String action, // "IN" | "OUT"
+    required String attTime, // "13:06:57"
+    required String attDate, // "24-Jun-2025"
+    required String remarks, // "0"
+    required String appVersion, // "1.1"
+    required String regtoken, // "0"
   }) async {
     final payload = <String, dynamic>{
       "type": type,
@@ -136,7 +138,7 @@ final  attendanceUrl = "http://services.zankgroup.com/amslive/index.php?route=ap
       return http.Response(
         jsonEncode({
           "isSuccess": false,
-          "message": "Request timed out. Please try again."
+          "message": "Request timed out. Please try again.",
         }),
         408,
       );
@@ -149,118 +151,60 @@ final  attendanceUrl = "http://services.zankgroup.com/amslive/index.php?route=ap
     }
   }
 
-
-
   Future<http.Response> login({
-  required String email,
-  required String pass,
-  required String latitude,    // keep as String if backend expects string
-  required String longitude,   // keep as String if backend expects string
-  required String actType,     // e.g. "LOGIN"
-  required String action,      // e.g. "IN"
-  required String attTime,     // e.g. "11:20:52"
-  required String attDate,     // e.g. "13-Nov-2025"
-  required String appVersion,  // e.g. "2.0.2"
-  required String add,         // address/notes
-  required String deviceId,    // e.g. "0d6bb3238ca24544"
-}) async {
-  final payload = <String, dynamic>{
-    "email": email,
-    "pass": pass,
-    "latitude": latitude,
-    "longitude": longitude,
-    "act_type": actType,
-    "action": action,
-      "att_time": attTime, 
-    "att_date": attDate,
-    "app_version": appVersion,
-    "add": add,
-    "device_id": deviceId,
-  };
-
-  final formBody = {"request": jsonEncode(payload)};
-
-  try {
-    final res = await http
-        .post(Uri.parse(loginUrl), headers: _formHeaders, body: formBody)
-        .timeout(const Duration(seconds: 30));
-
-    debugPrint("⬅️ /login ${res.statusCode}: ${res.body}");
-    return res;
-  } on TimeoutException {
-    return http.Response(
-      jsonEncode({"isSuccess": false, "message": "Request timed out. Please try again."}),
-      408,
-    );
-  } catch (e, st) {
-    debugPrint('login error: $e\n$st');
-    return http.Response(
-      jsonEncode({"isSuccess": false, "message": "Unexpected error: $e"}),
-      520,
-    );
-  }
-}
-
-/*
-Future<http.Response> registerUser({
-    required String code,
-    required String name,
-    required String cnic,
-    required String address,
-    required String mobile1,
-    required String mobile2,
     required String email,
-    required String password,
-    required String distribution,
-    required String territory,
-    required String channel,
-    required String latitude,
-    required String longitude,
-    required String deviceId,
-    required String regToken,
+    required String pass,
+    required String latitude, // keep as String if backend expects string
+    required String longitude, // keep as String if backend expects string
+    required String actType, // e.g. "LOGIN"
+    required String action, // e.g. "IN"
+    required String attTime, // e.g. "11:20:52"
+    required String attDate, // e.g. "13-Nov-2025"
+    required String appVersion, // e.g. "2.0.2"
+    required String add, // address/notes
+    required String deviceId, // e.g. "0d6bb3238ca24544"
   }) async {
     final payload = <String, dynamic>{
-      "code": code,
-      "name": name,
-      "cnic": cnic,
-      "address": address,
-      "mobile1": mobile1,
-      "mobile2": mobile2,
       "email": email,
-      "password": password,
-      "distribution": distribution,
-      "territory": territory,
-      "channel": channel,
-      "latitude": 0,
-      "longitude": 0,
-      "deviceid": deviceId,
-      "regtoken": 0,
+      "pass": pass,
+      "latitude": latitude,
+      "longitude": longitude,
+      "act_type": actType,
+      "action": action,
+      "att_time": attTime,
+      "att_date": attDate,
+      "app_version": appVersion,
+      "add": add,
+      "device_id": deviceId,
     };
 
     final formBody = {"request": jsonEncode(payload)};
 
-    final res = await http
-        .post(Uri.parse(registerUrl), headers: _formHeaders, body: formBody)
-        .timeout(const Duration(seconds: 30));
+    try {
+      final res = await http
+          .post(Uri.parse(loginUrl), headers: _formHeaders, body: formBody)
+          .timeout(const Duration(seconds: 30));
 
-    if (res.statusCode == 200) {
-      print("STATUS CODE 200");
-      print("STATUS CODE 200");
-      print("STATUS CODE 200");
-      print("STATUS CODE 200");
-      print("STATUS CODE 200");
-      print("STATUS CODE 200");
-      print("STATUS CODE 200");
-      print("STATUS CODE 200");
-  
+      debugPrint("⬅️ /login ${res.statusCode}: ${res.body}");
+      return res;
+    } on TimeoutException {
+      return http.Response(
+        jsonEncode({
+          "isSuccess": false,
+          "message": "Request timed out. Please try again.",
+        }),
+        408,
+      );
+    } catch (e, st) {
+      debugPrint('login error: $e\n$st');
+      return http.Response(
+        jsonEncode({"isSuccess": false, "message": "Unexpected error: $e"}),
+        520,
+      );
     }
-
-    debugPrint("⬅️ /register ${res.statusCode}: ${res.body}");
-    return res;
   }
-*/
-  
-  // Toggle these depending on where your PHP server is running
+
+
   static const String _lanHost = '192.168.1.73'; // physical device target
   static const String _androidEmuHost = '10.0.2.2'; // Android emulator → host
   static const String _iosSimHost = '127.0.0.1'; // iOS simulator → host
@@ -284,10 +228,8 @@ Future<http.Response> registerUser({
   String get _leaveTypeUrl => '$_base/getLeaveType';
 
   Map<String, String> get _acceptOnlyHeaders => const {
-        'Accept': 'application/json',
-      };
-
-
+    'Accept': 'application/json',
+  };
 
   /// High-level call: tries multipart, then x-www-form-urlencoded, then GET.
   Future<GetLeaveTypeModel> getLeaveTypes({
@@ -305,7 +247,11 @@ Future<http.Response> registerUser({
 
     final sc = r1.code ?? r2.code ?? r3.code ?? -1;
     final msg = r1.err ?? r2.err ?? r3.err ?? 'no_valid_response';
-    return GetLeaveTypeModel(status: '0', message: 'http_$sc:$msg', items: const []);
+    return GetLeaveTypeModel(
+      status: '0',
+      message: 'http_$sc:$msg',
+      items: const [],
+    );
   }
 
   /* --------------------------- raw variants --------------------------- */
@@ -340,8 +286,9 @@ Future<http.Response> registerUser({
     try {
       final uri = Uri.parse(url);
       debugPrint('➡️ [form] POST $uri  fields: $fields');
-      final res =
-          await http.post(uri, headers: _formHeaders, body: fields).timeout(timeout);
+      final res = await http
+          .post(uri, headers: _formHeaders, body: fields)
+          .timeout(timeout);
       debugPrint('⬅️ [form] ${res.statusCode} ${res.reasonPhrase}');
       debugPrint('⬅️ body: ${res.body}');
       return _CallResult(code: res.statusCode, body: res.body);
@@ -360,7 +307,9 @@ Future<http.Response> registerUser({
       final u = Uri.parse(url);
       final uri = u.replace(queryParameters: {...u.queryParameters, ...qp});
       debugPrint('➡️ [GET] $uri');
-      final res = await http.get(uri, headers: _acceptOnlyHeaders).timeout(timeout);
+      final res = await http
+          .get(uri, headers: _acceptOnlyHeaders)
+          .timeout(timeout);
       debugPrint('⬅️ [GET] ${res.statusCode} ${res.reasonPhrase}');
       debugPrint('⬅️ body: ${res.body}');
       return _CallResult(code: res.statusCode, body: res.body);
