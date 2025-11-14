@@ -5,6 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:new_amst_flutter/Model/products_data.dart';
 
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
+
+/* --------------------------- Theme --------------------------- */
 
 const kText = Color(0xFF1E1E1E);
 const kMuted = Color(0xFF707883);
@@ -26,8 +31,29 @@ const _kCardDeco = BoxDecoration(
 
 /* --------------------------- Helpers --------------------------- */
 
+/// Coerces any dynamic value to a best-effort int.
+int _toInt(dynamic v) {
+  if (v is int) return v;
+  if (v is double) return v.toInt();
+  if (v is num) return v.toInt();
+  if (v is String) {
+    final s = v.trim();
+    final asInt = int.tryParse(s);
+    if (asInt != null) return asInt;
+    final dot = s.indexOf('.');
+    if (dot > 0) return int.tryParse(s.substring(0, dot)) ?? 0; // e.g. "12.0"
+  }
+  return 0;
+}
+
 class PrimaryGradientButton extends StatelessWidget {
-  const PrimaryGradientButton({super.key, required this.text, required this.onPressed, this.loading = false});
+  const PrimaryGradientButton({
+    super.key,
+    required this.text,
+    required this.onPressed,
+    this.loading = false,
+  });
+
   final String text;
   final VoidCallback? onPressed;
   final bool loading;
@@ -48,13 +74,15 @@ class PrimaryGradientButton extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(28),
             onTap: disabled ? null : onPressed,
-            child: const SizedBox(
+            child: SizedBox(
               height: 44,
               child: Center(
-                child: Text(
-                  'BUTTON',
-                  style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
-                ),
+                child: loading
+                    ? const SizedBox(
+                        width: 20, height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                      )
+                    : Text(text, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
               ),
             ),
           ),
@@ -72,9 +100,16 @@ class TeaItem {
   final String name;
   final String desc;
   final String brand;
-  const TeaItem({required this.key, required this.itemId, required this.name, required this.desc, required this.brand});
+  const TeaItem({
+    required this.key,
+    required this.itemId,
+    required this.name,
+    required this.desc,
+    required this.brand,
+  });
 }
 
+/// Map your local `kTeaProducts` list (List<Map<String,dynamic>>) to TeaItem.
 List<TeaItem> mapLocalToTea(List<Map<String, dynamic>> raw) {
   final list = <TeaItem>[];
   for (var i = 0; i < raw.length; i++) {
@@ -90,67 +125,164 @@ List<TeaItem> mapLocalToTea(List<Map<String, dynamic>> raw) {
   return list;
 }
 
-/* --------------------------- Storage --------------------------- */
-
-class CartStorage {
-  final _box = GetStorage();
-  String _skuKey() => 'local_cart_sku';
-  Map<String, int> loadSku() {
-    final raw = _box.read(_skuKey());
-    if (raw == null) return {};
-    try {
-      final d = jsonDecode(raw);
-      if (d is! Map) return {};
-      final m = <String, int>{};
-      d.forEach((k, v) {
-        if (k is String) m[k] = (v is int) ? v : int.tryParse('$v') ?? 0;
-      });
-      m.removeWhere((_, q) => q <= 0);
-      return m;
-    } catch (_) {
-      return {};
-    }
-  }
-  Future<void> saveSku(Map<String, int> cart) async =>
-      _box.write(_skuKey(), jsonEncode(Map.of(cart)..removeWhere((_, q) => q <= 0)));
-  Future<void> clear() async => _box.remove(_skuKey());
-}
+/* --------------------------- Order Storage Model --------------------------- */
 
 class OrderRecord {
   final String id;
   final DateTime createdAt;
   final List<Map<String, dynamic>> lines;
-  OrderRecord({required this.id, required this.createdAt, required this.lines});
-  Map<String, dynamic> toJson() => {'id': id, 'createdAt': createdAt.toIso8601String(), 'lines': lines};
-  static OrderRecord fromJson(Map<String, dynamic> j) => OrderRecord(
-        id: '${j['id'] ?? ''}',
-        createdAt: DateTime.tryParse('${j['createdAt'] ?? ''}') ?? DateTime.now(),
-        lines: (j['lines'] as List?)?.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList() ?? const [],
-      );
+
+  // summary for ReportHistory / headers
+  final String? title;      // e.g. "UR TEA BAG BLACK … +2 more"
+  final String? shopName;   // optional if you add shop context later
+  final int itemCount;      // distinct items in the order
+  final int totalQty;       // sum of qty
+  final bool downloaded;    // if user tapped Download in history
+
+  OrderRecord({
+    required this.id,
+    required this.createdAt,
+    required this.lines,
+    this.title,
+    this.shopName,
+    this.itemCount = 0,
+    this.totalQty = 0,
+    this.downloaded = false,
+  });
+
+  OrderRecord copyWith({
+    String? id,
+    DateTime? createdAt,
+    List<Map<String, dynamic>>? lines,
+    String? title,
+    String? shopName,
+    int? itemCount,
+    int? totalQty,
+    bool? downloaded,
+  }) {
+    return OrderRecord(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      lines: lines ?? this.lines,
+      title: title ?? this.title,
+      shopName: shopName ?? this.shopName,
+      itemCount: itemCount ?? this.itemCount,
+      totalQty: totalQty ?? this.totalQty,
+      downloaded: downloaded ?? this.downloaded,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "createdAt": createdAt.toIso8601String(),
+        "lines": lines,
+        "title": title,
+        "shopName": shopName,
+        "itemCount": itemCount,
+        "totalQty": totalQty,
+        "downloaded": downloaded,
+      };
+
+  static OrderRecord fromJson(Map<String, dynamic> j) {
+    final List<Map<String, dynamic>> ls = (j["lines"] is List)
+        ? (j["lines"] as List)
+            .whereType<Map>()
+            .map((e) => e.cast<String, dynamic>())
+            .toList()
+        : const <Map<String, dynamic>>[];
+
+    // tolerant defaults for older saved shape — now safely coerce num → int
+    final int totalQty = (j["totalQty"] is num)
+        ? (j["totalQty"] as num).toInt()
+        : ls.fold<int>(0, (a, e) => a + _toInt(e["qty"]));
+
+    final int itemCount = (j["itemCount"] is num)
+        ? (j["itemCount"] as num).toInt()
+        : ls.length;
+
+    return OrderRecord(
+      id: "${j["id"] ?? ""}",
+      createdAt: DateTime.tryParse("${j["createdAt"] ?? ""}") ?? DateTime.now(),
+      lines: ls,
+      title: j["title"] as String?,
+      shopName: j["shopName"] as String?,
+      itemCount: itemCount,
+      totalQty: totalQty,
+      downloaded: j["downloaded"] == true,
+    );
+  }
 }
+
 class OrdersStorage {
   final _box = GetStorage();
   final _key = 'local_orders';
+
   Future<void> addOrder(OrderRecord r) async {
-    final all = await listOrders();
-    all.insert(0, r);
-    await _box.write(_key, jsonEncode(all.map((e) => e.toJson()).toList()));
+    final list = await listOrders();
+    list.insert(0, r);
+    await _box.write(_key, jsonEncode(list.map((e) => e.toJson()).toList()));
   }
+
   Future<List<OrderRecord>> listOrders() async {
     final raw = _box.read(_key);
     if (raw == null) return [];
     try {
       final d = jsonDecode(raw);
       if (d is! List) return [];
-      return d.whereType<Map>().map((e) => OrderRecord.fromJson(e.cast<String, dynamic>())).toList();
+      final list = d
+          .whereType<Map>()
+          .map((e) => OrderRecord.fromJson(e.cast<String, dynamic>()))
+          .toList();
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
     } catch (_) {
       return [];
     }
   }
+
   Future<void> clear() => _box.remove(_key);
+
+  Future<void> setDownloaded(String id, bool downloaded) async {
+    final list = await listOrders();
+    final i = list.indexWhere((e) => e.id == id);
+    if (i < 0) return;
+    list[i] = list[i].copyWith(downloaded: downloaded);
+    await _box.write(_key, jsonEncode(list.map((e) => e.toJson()).toList()));
+  }
 }
 
-/* --------------------------- Main Catalog (No Stack) --------------------------- */
+/* --------------------------- Cart Storage (SKU only) --------------------------- */
+
+class CartStorage {
+  final _box = GetStorage();
+  final String _keySku = 'sku_cart_default';
+
+  Map<String, int> loadSku() {
+    final raw = _box.read(_keySku);
+    if (raw == null) return {};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return {};
+      final out = <String, int>{};
+      decoded.forEach((k, v) {
+        if (k is String) out[k] = _toInt(v);
+      });
+      out.removeWhere((_, q) => q <= 0);
+      return out;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> saveSku(Map<String, int> cart) async {
+    final clean = Map.of(cart)..removeWhere((_, q) => q <= 0);
+    await _box.write(_keySku, jsonEncode(clean));
+  }
+
+  Future<void> clear() async => _box.remove(_keySku);
+}
+
+/* --------------------------- Catalog (SKU only, no Stack) --------------------------- */
 
 class LocalTeaCatalogSkuOnly extends StatefulWidget {
   const LocalTeaCatalogSkuOnly({super.key});
@@ -169,8 +301,11 @@ class _LocalTeaCatalogSkuOnlyState extends State<LocalTeaCatalogSkuOnly> {
   @override
   void initState() {
     super.initState();
+    // Ensure `kTeaProducts` (List<Map<String,dynamic>>) is defined in your project.
     _all = mapLocalToTea(kTeaProducts);
-    _cartSku..clear()..addAll(_store.loadSku());
+    _cartSku
+      ..clear()
+      ..addAll(_store.loadSku());
   }
 
   @override
@@ -182,11 +317,19 @@ class _LocalTeaCatalogSkuOnlyState extends State<LocalTeaCatalogSkuOnly> {
   int _getSku(String k) => _cartSku[k] ?? 0;
   Future<void> _persist() => _store.saveSku(_cartSku);
 
-  void _incSku(TeaItem it) { setState(() => _cartSku[it.key] = _getSku(it.key) + 1); _persist(); }
+  void _incSku(TeaItem it) {
+    setState(() => _cartSku[it.key] = _getSku(it.key) + 1);
+    _persist();
+  }
+
   void _decSku(TeaItem it) {
     setState(() {
       final q = _getSku(it.key);
-      if (q > 1) _cartSku[it.key] = q - 1; else _cartSku.remove(it.key);
+      if (q > 1) {
+        _cartSku[it.key] = q - 1;
+      } else {
+        _cartSku.remove(it.key);
+      }
     });
     _persist();
   }
@@ -195,6 +338,7 @@ class _LocalTeaCatalogSkuOnlyState extends State<LocalTeaCatalogSkuOnly> {
   Widget build(BuildContext context) {
     final brands = <String>["All", ...{for (final i in _all) i.brand}.where((s) => s.isNotEmpty)];
     final q = _search.text.trim().toLowerCase();
+
     final filtered = _all.where((e) {
       final brandOk = _selectedBrand == "All" || e.brand == _selectedBrand;
       final searchOk = q.isEmpty || e.name.toLowerCase().contains(q) || e.desc.toLowerCase().contains(q);
@@ -219,22 +363,27 @@ class _LocalTeaCatalogSkuOnlyState extends State<LocalTeaCatalogSkuOnly> {
                 padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
                 child: SizedBox(
                   width: double.infinity,
-                  child: _PrimaryGradButton(text: 'VIEW LIST ($totalSku)', onPressed: () async {
-                    final res = await Navigator.of(context).push<Map<String, dynamic>>(
-                      MaterialPageRoute(builder: (_) => _CartScreenSkuOnly(allItems: _all, cartSku: _cartSku)),
-                    );
-                    if (res?['submitted'] == true) {
-                      setState(() => _cartSku.clear());
-                      await _store.clear();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Order saved locally ✅')),
-                        );
+                  child: _PrimaryGradButton(
+                    text: 'VIEW LIST ($totalSku)',
+                    onPressed: () async {
+                      final res = await Navigator.of(context).push<Map<String, dynamic>>(
+                        MaterialPageRoute(
+                          builder: (_) => _CartScreenSkuOnly(allItems: _all, cartSku: _cartSku),
+                        ),
+                      );
+                      if (res?['submitted'] == true) {
+                        setState(() => _cartSku.clear());
+                        await _store.clear();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Order saved locally ✅')),
+                          );
+                        }
+                      } else {
+                        await _persist();
                       }
-                    } else {
-                      await _persist();
-                    }
-                  }),
+                    },
+                  ),
                 ),
               ),
             ),
@@ -278,14 +427,17 @@ class _LocalTeaCatalogSkuOnlyState extends State<LocalTeaCatalogSkuOnly> {
                     if (_search.text.isNotEmpty)
                       IconButton(
                         icon: const Icon(Icons.close_rounded, color: Colors.black45),
-                        onPressed: () { _search.clear(); setState(() {}); },
+                        onPressed: () {
+                          _search.clear();
+                          setState(() {});
+                        },
                       ),
                   ],
                 ),
               ),
             ),
 
-            // Brand chips — same layout, new colors
+            // Brand chips
             SizedBox(
               height: 44,
               child: ListView.separated(
@@ -315,10 +467,15 @@ class _LocalTeaCatalogSkuOnlyState extends State<LocalTeaCatalogSkuOnly> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
               child: Row(
                 children: [
-                  Text('${filtered.length} products', style: const TextStyle(color: kMuted, fontSize: 12, fontWeight: FontWeight.w600)),
+                  Text('${filtered.length} products',
+                      style: const TextStyle(color: kMuted, fontSize: 12, fontWeight: FontWeight.w600)),
                   const Spacer(),
                   if (totalSku > 0)
-                    Text('In list: SKU $totalSku',
+                    const Text('In list:',
+                        style: TextStyle(color: Color(0xFF7F53FD), fontWeight: FontWeight.w800, fontSize: 12)),
+                  if (totalSku > 0) const SizedBox(width: 6),
+                  if (totalSku > 0)
+                    Text('SKU $totalSku',
                         style: const TextStyle(color: Color(0xFF7F53FD), fontWeight: FontWeight.w800, fontSize: 12)),
                 ],
               ),
@@ -355,7 +512,7 @@ class _LocalTeaCatalogSkuOnlyState extends State<LocalTeaCatalogSkuOnly> {
   }
 }
 
-/* --------------------------- Product Card (95% width) --------------------------- */
+/* --------------------------- Product Card (95% width, SKU only) --------------------------- */
 
 class _ProductCardSkuOnly extends StatelessWidget {
   const _ProductCardSkuOnly({
@@ -380,7 +537,7 @@ class _ProductCardSkuOnly extends StatelessWidget {
 
     return Container(
       decoration: const BoxDecoration(
-        gradient: _kGrad, // keep old design, update colors to blue→purple
+        gradient: _kGrad,
         borderRadius: BorderRadius.all(Radius.circular(16)),
       ),
       child: Container(
@@ -406,10 +563,19 @@ class _ProductCardSkuOnly extends StatelessWidget {
                   child: Text(brand, style: const TextStyle(color: kText, fontWeight: FontWeight.w600, fontSize: 12)),
                 ),
                 const SizedBox(height: 6),
-                Text(name, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: t.titleMedium?.copyWith(color: kText, fontWeight: FontWeight.w700)),
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: t.titleMedium?.copyWith(color: kText, fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 2),
-                Text(desc, maxLines: 2, overflow: TextOverflow.ellipsis, style: t.bodySmall?.copyWith(color: kMuted)),
+                Text(
+                  desc,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: t.bodySmall?.copyWith(color: kMuted),
+                ),
               ]),
             ),
             const SizedBox(width: 12),
@@ -440,14 +606,20 @@ class _QtyControlsSku extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(visualDensity: VisualDensity.compact, onPressed: onDec,
-              icon: const Icon(Icons.remove_rounded, size: 20, color: kText)),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            onPressed: onDec,
+            icon: const Icon(Icons.remove_rounded, size: 20, color: kText),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Text('$qty', style: const TextStyle(fontWeight: FontWeight.w700, color: kText)),
           ),
-          IconButton(visualDensity: VisualDensity.compact, onPressed: onInc,
-              icon: const Icon(Icons.add_rounded, size: 20, color: kText)),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            onPressed: onInc,
+            icon: const Icon(Icons.add_rounded, size: 20, color: kText),
+          ),
         ],
       ),
     );
@@ -490,9 +662,25 @@ class _CartScreenSkuOnlyState extends State<_CartScreenSkuOnly> {
     try {
       final lines = <Map<String, dynamic>>[
         for (final r in _rows)
-          {'key': r.item.key, 'itemId': r.item.itemId, 'name': r.item.name, 'brand': r.item.brand, 'qty': r.qty},
+          {
+            'key': r.item.key,
+            'itemId': r.item.itemId,
+            'name': r.item.name,
+            'brand': r.item.brand,
+            'qty': r.qty,
+          },
       ];
-      final rec = OrderRecord(id: DateTime.now().microsecondsSinceEpoch.toString(), createdAt: DateTime.now(), lines: lines);
+
+      final rec = OrderRecord(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        createdAt: DateTime.now(),
+        lines: lines,
+        // Optional summaries (can be used by ReportHistory screen)
+        itemCount: _rows.length,
+        totalQty: _total,
+        title: _rows.isNotEmpty ? '${_rows.first.item.name}${_rows.length > 1 ? ' +${_rows.length - 1} more' : ''}' : null,
+      );
+
       await OrdersStorage().addOrder(rec);
       if (!mounted) return;
       Navigator.pop(context, {'submitted': true});
@@ -508,7 +696,6 @@ class _CartScreenSkuOnlyState extends State<_CartScreenSkuOnly> {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F3F5),
       appBar: AppBar(
-       // backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: kText),
         title: const Text('My List', style: TextStyle(color: kText, fontWeight: FontWeight.w700)),
@@ -645,6 +832,13 @@ class _PrimaryGradButton extends StatelessWidget {
     );
   }
 }
+
+/* ---------------------------------------------------------------
+   NOTE:
+   - Call `await GetStorage.init();` once (e.g., in main()) before using.
+   - Ensure `kTeaProducts` is defined (List<Map<String,dynamic>>).
+---------------------------------------------------------------- */
+
 
 
 /*
