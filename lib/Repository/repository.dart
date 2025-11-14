@@ -15,7 +15,7 @@ class Repository {
   final registerUrl = "http://teaapis.mezangrp.com/amstea/index.php?route=api/user/signup";
 
    final loginUrl = "http://teaapis.mezangrp.com/amstea/index.php?route=api/user/login";
-
+final  attendanceUrl = "http://services.zankgroup.com/amslive/index.php?route=api/most/attendance";
    
 
 
@@ -93,6 +93,62 @@ class Repository {
     final ok = status >= 200 && status < 300;
     return (ok: ok, message: ok ? 'Done' : 'Request failed ($status)');
   }
+
+  Future<http.Response> submitAttendance({
+    required int type,                // 1
+    required String code,             // "4310"
+    required String latitude,         // "24.8871334"
+    required String longitude,        // "66.9788572"
+    required String deviceId,         // "3d61adab1be4b2f2"
+    required String actType,          // "ATTENDANCE"
+    required String action,           // "IN" | "OUT"
+    required String attTime,          // "13:06:57"
+    required String attDate,          // "24-Jun-2025"
+    required String remarks,          // "0"
+    required String appVersion,       // "1.1"
+    required String regtoken,         // "0"
+  }) async {
+    final payload = <String, dynamic>{
+      "type": type,
+      "code": code,
+      "latitude": latitude,
+      "longitude": longitude,
+      "device_id": deviceId,
+      "act_type": actType,
+      "action": action,
+      "att_time": attTime,
+      "att_date": attDate,
+      "remarks": remarks,
+      "app_version": appVersion,
+      "regtoken": regtoken,
+    };
+
+    final body = {"request": jsonEncode(payload)};
+
+    try {
+      final res = await http
+          .post(Uri.parse(attendanceUrl), headers: _formHeaders, body: body)
+          .timeout(const Duration(seconds: 30));
+
+      debugPrint("⬅️ /attendance ${res.statusCode}: ${res.body}");
+      return res;
+    } on TimeoutException {
+      return http.Response(
+        jsonEncode({
+          "isSuccess": false,
+          "message": "Request timed out. Please try again."
+        }),
+        408,
+      );
+    } catch (e, st) {
+      debugPrint('submitAttendance error: $e\n$st');
+      return http.Response(
+        jsonEncode({"isSuccess": false, "message": "Unexpected error: $e"}),
+        520,
+      );
+    }
+  }
+
 
 
   Future<http.Response> login({

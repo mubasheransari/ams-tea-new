@@ -3,12 +3,15 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart' as geo;
+import 'package:new_amst_flutter/Repository/repository.dart';
+import 'package:new_amst_flutter/bloc/auth_bloc.dart';
 
 const _kPrimaryGrad = LinearGradient(
   colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)],
@@ -419,7 +422,33 @@ class _MarkAttendanceViewState extends State<MarkAttendanceView> {
                         height: 40,
                         child: _PrimaryGradientButton(
                           text: 'ATTENDANCE IN',
-                          onPressed: () {},
+                          onPressed: () async {
+                            final now = DateTime.now();
+                            final attTime = DateFormat('HH:mm:ss').format(now);
+                            final attDate = DateFormat(
+                              'dd-MMM-yyyy',
+                            ).format(now);
+                            await Repository().submitAttendance(
+                              type: 1,
+                              code: context
+                                  .read<AuthBloc>()
+                                  .state
+                                  .loginModel!
+                                  .userinfo!
+                                  .code
+                                  .toString(),
+                              latitude: "24.8871334",
+                              longitude: "66.9788572",
+                              deviceId: "3d61adab1be4b2f2",
+                              actType: "ATTENDANCE",
+                              action: "IN",
+                              appVersion: "2.0.2",
+                              attTime: attTime,
+                              attDate: attDate,
+                              remarks: 'vtrg',
+                              regtoken: '0d6bb3238ca24544',
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -430,7 +459,6 @@ class _MarkAttendanceViewState extends State<MarkAttendanceView> {
                       child: Text(
                         _dateTime,
                         style: TextStyle(
-                        
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'ClashGrotesk',
@@ -554,7 +582,7 @@ class _PrimaryGradientButton extends StatelessWidget {
   const _PrimaryGradientButton({
     required this.text,
     required this.onPressed,
-    this.loading = false
+    this.loading = false,
   });
 
   final String text;
@@ -631,7 +659,7 @@ class _PunchCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final titleColor = lightOnGradient ? Colors.white : const Color(0xFF1E1E1E);
-    final timeColor  = lightOnGradient ? Colors.white : const Color(0xFFEA7A3B);
+    final timeColor = lightOnGradient ? Colors.white : const Color(0xFFEA7A3B);
 
     return Column(
       children: [

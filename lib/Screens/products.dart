@@ -446,6 +446,7 @@ class _LocalTeaCatalogSkuOnlyState extends State<LocalTeaCatalogSkuOnly> {
                   final label = brands[i];
                   final selected = _selectedBrand == label;
                   return ChoiceChip(
+              //      iconTheme: IconThemeData(color: Colors.white,size: 50),
                     label: Text(label,style: TextStyle(       fontFamily: 'ClashGrotesk',),),
                     selected: selected,
                     onSelected: (_) => setState(() => _selectedBrand = label),
@@ -454,6 +455,7 @@ class _LocalTeaCatalogSkuOnlyState extends State<LocalTeaCatalogSkuOnly> {
                     backgroundColor: Colors.white,
                     shape: StadiumBorder(side: BorderSide(color: selected ? Colors.transparent : const Color(0xFFEDEFF2))),
                     elevation: selected ? 2 : 0,
+                    
                   );
                 },
               ),
