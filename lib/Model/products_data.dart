@@ -1,10 +1,3 @@
-// Put your full JSON list here exactly as you shared.
-// Tip: Keep this file "data-only" so UI stays lightweight.
-
-library tea_products_data;
-
-/// Paste the *ENTIRE* list you sent into this variable.
-/// Example structure is shown; replace it with your full list.
 const List<Map<String, dynamic>> kTeaProducts =  [
         {
             "item_name": "110001 - UR TEA BAG BLACK ALOCKED 2GM (ENVELOPE) 100X20 CTN - ULTRA RICH - TEA",

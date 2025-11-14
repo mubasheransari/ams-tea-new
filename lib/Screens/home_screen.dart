@@ -523,7 +523,7 @@ class SalesWidget extends StatelessWidget {
                 const Spacer(),
                 InkWell(
                   onTap: (){
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=> TeaCatalogScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (context)=> LocalTeaCatalogSkuOnly()));
                   },
                   child: _ChipButtonGradient(s: s, label: 'Enter your Sales')),
               ],
