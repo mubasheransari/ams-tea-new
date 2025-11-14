@@ -481,22 +481,31 @@ class _AuthScreenState extends State<AuthScreen> {
                                       height: 40,
                                       child: BlocConsumer<AuthBloc, AuthState>(
                                          listener: (context, state) {
-    if (state.loginStatus == LoginStatus.success) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const AppShell()),
-        (route) => false,
-      );
-     // toastWidget("✅ Authenticated Successfully!", Colors.green);
+                                            if (state.loginStatus == LoginStatus.success) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const AppShell()), // or HomeScreen()
+      (route) => false,
+    );
+  } else if (state.loginStatus == LoginStatus.failure) {
+    // show error if you want
+  }
+    // if (state.loginStatus == LoginStatus.success) {
+    //   Navigator.pushAndRemoveUntil(
+    //     context,
+    //     MaterialPageRoute(builder: (context) => const AppShell()),
+    //     (route) => false,
+    //   );
+    //  // toastWidget("✅ Authenticated Successfully!", Colors.green);
 
     
-    } else if (state.loginStatus== LoginStatus.failure) {
-     // toastWidget("Incorrect Email or Password", Colors.red);
-     print("LOGGED IN FAILED ");
-      print("LOGGED IN FAILED ");
-       print("LOGGED IN FAILED ");
-        print("LOGGED IN FAILED ");
-    }
+    // } else if (state.loginStatus== LoginStatus.failure) {
+    //  // toastWidget("Incorrect Email or Password", Colors.red);
+    //  print("LOGGED IN FAILED ");
+    //   print("LOGGED IN FAILED ");
+    //    print("LOGGED IN FAILED ");
+    //     print("LOGGED IN FAILED ");
+    // }
   }, //listener: (context, state) {},
                                         builder: (context, state) {
                                           return _PrimaryGradientButton(
@@ -683,7 +692,8 @@ class _AuthScreenState extends State<AuthScreen> {
                                           const SizedBox(width: 10),
                                           Expanded(
                                             child: DropdownButtonFormField<String>(
-                                              initialValue: _channelType,
+                                              hint: Text('Channel Type'),
+                                           //   initialValue: _channelType,
                                               isExpanded: true,
                                               alignment: Alignment.centerLeft,
                                               style: const TextStyle(

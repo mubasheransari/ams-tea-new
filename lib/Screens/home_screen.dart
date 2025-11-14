@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
 import 'package:new_amst_flutter/Screens/apply_leave_screen.dart';
 import 'package:new_amst_flutter/Screens/mark_attendance.dart'
     show MarkAttendanceView;
 import 'package:new_amst_flutter/Screens/products.dart';
 import 'package:new_amst_flutter/Widgets/gradient_text.dart';
+
+    String formatTitleCase(String text) {
+    if (text.isEmpty) return text;
+    return text
+        .toLowerCase()
+        .split(' ')
+        .map(
+          (w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '',
+        )
+        .join(' ');
+  }
+
 
 const kBg = Color(0xFFF6F7FA);
 const kTxtDim = Color(0xFF6A6F7B);
@@ -47,8 +61,8 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   SizedBox(height: 6 * s),
                   _Header(s: s),
-                  SizedBox(height: 16 * s),
-                  _SearchBar(s: s),
+                  // SizedBox(height: 16 * s),
+                  // _SearchBar(s: s),
                   SizedBox(height: 25 * s),
                   MarkAttendanceWidget(s: s),
                   SizedBox(height: 30 * s),
@@ -65,12 +79,18 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+
 class _Header extends StatelessWidget {
   const _Header({required this.s});
   final double s;
 
   @override
   Widget build(BuildContext context) {
+    // Rebuild when loginModel changes:
+    final loginModel = context.select((AuthBloc b) => b.state.loginModel);
+    final rawName = loginModel?.userinfo?.empnam ?? 'User';
+    final name = formatTitleCase(rawName);
+
     return Row(
       children: [
         Expanded(
@@ -79,7 +99,7 @@ class _Header extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'ClashGrotesk',
                 fontSize: 14 * s,
-                color: Color(0xFF6A6F7B),
+                color: const Color(0xFF6A6F7B),
                 height: 1.2,
               ),
               children: [
@@ -97,7 +117,7 @@ class _Header extends StatelessWidget {
                   alignment: PlaceholderAlignment.baseline,
                   baseline: TextBaseline.alphabetic,
                   child: GradientText(
-                    "Test User",
+                    name,
                     gradient: const LinearGradient(
                       colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
                       begin: Alignment.centerLeft,
@@ -116,29 +136,106 @@ class _Header extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: 10 * s),
-        Container(
-          padding: EdgeInsets.all(2 * s),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [ 
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 8 * s,
-                offset: Offset(0, 4 * s),
-              ),
-            ],
-          ),
-          child: CircleAvatar(
-            radius: 30 * s,
-            backgroundImage: const AssetImage('assets/avatar.png'),
-          ),
-        ),
+        // SizedBox(width: 10 * s),
+        // Container(
+        //   padding: EdgeInsets.all(2 * s),
+        //   decoration: BoxDecoration(
+        //     color: Colors.white,
+        //     shape: BoxShape.circle,
+        //     boxShadow: [
+        //       BoxShadow(
+        //         color: Colors.black.withOpacity(0.06),
+        //         blurRadius: 8 * s,
+        //         offset: Offset(0, 4 * s),
+        //       ),
+        //     ],
+        //   ),
+        //   child: CircleAvatar(
+        //     radius: 30 * s,
+        //     backgroundImage: const AssetImage('assets/avatar.png'),
+        //   ),
+        // ),
       ],
     );
   }
 }
+
+
+// class _Header extends StatelessWidget {
+//   const _Header({required this.s});
+//   final double s;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Row(
+//       children: [
+//         Expanded(
+//           child: RichText(
+//             text: TextSpan(
+//               style: TextStyle(
+//                 fontFamily: 'ClashGrotesk',
+//                 fontSize: 14 * s,
+//                 color: Color(0xFF6A6F7B),
+//                 height: 1.2,
+//               ),
+//               children: [
+//                 TextSpan(
+//                   text: 'Good morning,\n',
+//                   style: TextStyle(
+//                     fontFamily: 'ClashGrotesk',
+//                     fontSize: 18 * s,
+//                     fontWeight: FontWeight.w700,
+//                     height: 1.2,
+//                     letterSpacing: 0.1 * s,
+//                   ),
+//                 ),
+//                 WidgetSpan(
+//                   alignment: PlaceholderAlignment.baseline,
+//                   baseline: TextBaseline.alphabetic,
+//                   child: GradientText(
+//                     formatTitleCase(context.read<AuthBloc>().state.loginModel!.userinfo!.empnam.toString()),
+//                  // context.read<AuthBloc>().state.loginModel!.userinfo. // "Test User",
+//                     gradient: const LinearGradient(
+//                       colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
+//                       begin: Alignment.centerLeft,
+//                       end: Alignment.centerRight,
+//                     ),
+//                     style: TextStyle(
+//                       fontFamily: 'ClashGrotesk',
+//                       fontSize: 25 * s,
+//                       fontWeight: FontWeight.w900,
+//                       height: 1.2,
+//                       letterSpacing: 0.1 * s,
+//                     ),
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ),
+//         SizedBox(width: 10 * s),
+//         Container(
+//           padding: EdgeInsets.all(2 * s),
+//           decoration: BoxDecoration(
+//             color: Colors.white,
+//             shape: BoxShape.circle,
+//             boxShadow: [ 
+//               BoxShadow(
+//                 color: Colors.black.withOpacity(0.06),
+//                 blurRadius: 8 * s,
+//                 offset: Offset(0, 4 * s),
+//               ),
+//             ],
+//           ),
+//           child: CircleAvatar(
+//             radius: 30 * s,
+//             backgroundImage: const AssetImage('assets/avatar.png'),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
 
 class _SearchBar extends StatelessWidget {
   const _SearchBar({required this.s});

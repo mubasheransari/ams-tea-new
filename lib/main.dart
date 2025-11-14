@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
 import 'package:new_amst_flutter/Bloc/auth_event.dart';
+import 'package:new_amst_flutter/Data/local_sessions.dart';
 import 'package:new_amst_flutter/Repository/repository.dart';
+import 'package:new_amst_flutter/Screens/app_shell.dart';
 import 'package:new_amst_flutter/Screens/splash_screen.dart';
-void main() {
+void main() async{
+    await GetStorage.init();
   WidgetsFlutterBinding.ensureInitialized();
 
   final repo = Repository();
-  final authBloc = AuthBloc(repo)
-    ..add(LoginEvent('mubashera38@gmail.com','123')); 
+  final authBloc = AuthBloc(repo);
+   // ..add(LoginEvent('mubashera38@gmail.com','123')); 
 
   runApp(MyApp(repo: repo, authBloc: authBloc));
 }
@@ -21,6 +25,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+      final hasSession = LocalSession.readLogin() != null;
     return MaterialApp(
       title: 'AMS-T',
       debugShowCheckedModeBanner: false,
@@ -37,7 +42,7 @@ class MyApp extends StatelessWidget {
         );
       },
 
-      home: const SplashScreen(),
+      home: hasSession ? AppShell() : SplashScreen(),
     );
   }
 }

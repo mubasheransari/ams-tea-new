@@ -11,33 +11,68 @@ class AuthState extends Equatable {
   final GetLeavesTypeStatus getLeavesTypeStatus;
   final LoginStatus loginStatus;
   final GetLeaveTypeModel? getLeaveTypeModel;
-  final LoginModel ? loginModel;
+  final LoginModel? loginModel;
   final String? error;
 
   const AuthState({
     this.getLeavesTypeStatus = GetLeavesTypeStatus.initial,
+    this.loginStatus = LoginStatus.initial,
     this.getLeaveTypeModel,
     this.loginModel,
-    this.loginStatus = LoginStatus.initial,
     this.error,
   });
 
   AuthState copyWith({
     GetLeavesTypeStatus? getLeavesTypeStatus,
-    LoginStatus ? loginStatus,
+    LoginStatus? loginStatus,
     GetLeaveTypeModel? getLeaveTypeModel,
-    LoginModel ? loginModel,
+    LoginModel? loginModel,
     String? error,
   }) {
     return AuthState(
       getLeavesTypeStatus: getLeavesTypeStatus ?? this.getLeavesTypeStatus,
-      loginStatus:  loginStatus ?? this.loginStatus,
+      loginStatus: loginStatus ?? this.loginStatus,
       getLeaveTypeModel: getLeaveTypeModel ?? this.getLeaveTypeModel,
-      loginModel:  loginModel ?? this.loginModel,
+      loginModel: loginModel ?? this.loginModel,
       error: error,
     );
   }
 
   @override
-  List<Object?> get props => [getLeavesTypeStatus, loginStatus,getLeaveTypeModel,loginModel ,error];
+  List<Object?> get props => [getLeavesTypeStatus, loginStatus, getLeaveTypeModel, loginModel, error];
 }
+
+// class AuthState extends Equatable {
+//   final GetLeavesTypeStatus getLeavesTypeStatus;
+//   final LoginStatus loginStatus;
+//   final GetLeaveTypeModel? getLeaveTypeModel;
+//   final LoginModel ? loginModel;
+//   final String? error;
+
+//   const AuthState({
+//     this.getLeavesTypeStatus = GetLeavesTypeStatus.initial,
+//     this.getLeaveTypeModel,
+//     this.loginModel,
+//     this.loginStatus = LoginStatus.initial,
+//     this.error,
+//   });
+
+//   AuthState copyWith({
+//     GetLeavesTypeStatus? getLeavesTypeStatus,
+//     LoginStatus ? loginStatus,
+//     GetLeaveTypeModel? getLeaveTypeModel,
+//     LoginModel ? loginModel,
+//     String? error,
+//   }) {
+//     return AuthState(
+//       getLeavesTypeStatus: getLeavesTypeStatus ?? this.getLeavesTypeStatus,
+//       loginStatus:  loginStatus ?? this.loginStatus,
+//       getLeaveTypeModel: getLeaveTypeModel ?? this.getLeaveTypeModel,
+//       loginModel:  loginModel ?? this.loginModel,
+//       error: error,
+//     );
+//   }
+
+//   @override
+//   List<Object?> get props => [getLeavesTypeStatus, loginStatus,getLeaveTypeModel,loginModel ,error];
+// }
