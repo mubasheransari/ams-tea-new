@@ -697,7 +697,7 @@ class _CartScreenSkuOnlyState extends State<_CartScreenSkuOnly> {
       appBar: AppBar(
         elevation: 0,
         iconTheme: const IconThemeData(color: kText),
-        title: const Text('My List', style: TextStyle(color: kText, fontWeight: FontWeight.w700,       fontFamily: 'ClashGrotesk',)),
+        title: const Text('Order List', style: TextStyle(color: kText, fontWeight: FontWeight.w700,       fontFamily: 'ClashGrotesk',)),
       ),
       bottomNavigationBar: SafeArea(
         top: false,
