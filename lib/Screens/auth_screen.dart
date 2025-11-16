@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,12 +12,8 @@ import 'package:new_amst_flutter/Widgets/watermarked_widget.dart';
 import 'dart:ui' as ui;
 import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
 
-
-
 import 'dart:convert';
 import 'dart:math';
-
-
 
 // void showToast(BuildContext context, String message, {bool success = true}) {
 //   final mq = MediaQuery.of(context);
@@ -115,7 +110,7 @@ class _AuthScreenState extends State<AuthScreen> {
         setState(() => _scrollY = off);
       }
     });
-     _initDeviceId();
+    _initDeviceId();
   }
 
   Future<void> _initDeviceId() async {
@@ -132,12 +127,11 @@ class _AuthScreenState extends State<AuthScreen> {
     final bytes = List<int>.generate(8, (_) => rand.nextInt(256));
     final id = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
     print("DEVICE ID INFO $id");
-      print("DEVICE ID INFO $id");
+    print("DEVICE ID INFO $id");
 
-
-        print("DEVICE ID INFO $id");
-          print("DEVICE ID INFO $id");
-            print("DEVICE ID INFO $id");
+    print("DEVICE ID INFO $id");
+    print("DEVICE ID INFO $id");
+    print("DEVICE ID INFO $id");
 
     await box.write('device_id', id);
 
@@ -145,23 +139,7 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => _deviceId = id);
   }
 
-  // Future<void> _loadDeviceId() async {
-  //   try {
-  //     var id = _box.read<String>('device_id');
-  //     if (id == null || id.isEmpty) {
-  //       // generate random stable id
-  //       final rnd = Random.secure();
-  //       final bytes = List<int>.generate(16, (_) => rnd.nextInt(256));
-  //       id = base64UrlEncode(bytes).replaceAll('=', '');
-  //       await _box.write('device_id', id);
-  //     }
-  //     if (!mounted) return;
-  //     setState(() => _deviceId = id.toString());
-  //   } catch (_) {
-  //     if (!mounted) return;
-  //     setState(() => _deviceId = 'error');
-  //   }
-  // }
+
 
   @override
   void dispose() {
@@ -234,26 +212,19 @@ class _AuthScreenState extends State<AuthScreen> {
     return ok ? null : 'Use 03XXXXXXXXX or 92XXXXXXXXXX';
   }
 
-  // --------------- submit handlers ---------------
 
   Future<void> _submitLogin() async {
     final form = _loginFormKey.currentState;
     if (form == null) return;
 
-    FocusScope.of(context).unfocus(); // close keyboard
+    FocusScope.of(context).unfocus(); 
 
     if (!form.validate()) {
-   //   showToast(context, 'Please fix errors in the form', success: false);
       return;
     }
-
-    // delegate to bloc (same UI, just centralized)
     context.read<AuthBloc>().add(
-          LoginEvent(
-            _loginEmailCtrl.text.trim(),
-            _loginPassCtrl.text,
-          ),
-        );
+      LoginEvent(_loginEmailCtrl.text.trim(), _loginPassCtrl.text),
+    );
   }
 
   Future<void> _submitSignup() async {
@@ -263,8 +234,7 @@ class _AuthScreenState extends State<AuthScreen> {
     FocusScope.of(context).unfocus(); // close keyboard
 
     if (!form.validate()) {
-
-    //  showToast(context, 'Please fix errors in the form', success: false);
+      //  showToast(context, 'Please fix errors in the form', success: false);
       return;
     }
 
@@ -295,24 +265,21 @@ class _AuthScreenState extends State<AuthScreen> {
     print("api message $parsed");
 
     if (parsed.message.contains('Already') == false) {
+      await showAccountCreatedDialog(context);
 
-          await showAccountCreatedDialog(context);
-
-          setState(() {
-                                        if (_scrollCtrl.hasClients) {
-                                          _scrollCtrl.jumpTo(0);
-                                        }
-                                        tab = 0;
-                                        _scrollY = 0;
-                                      });
-
+      setState(() {
+        if (_scrollCtrl.hasClients) {
+          _scrollCtrl.jumpTo(0);
+        }
+        tab = 0;
+        _scrollY = 0;
+      });
     } else {
-    
-showAppToast(
-  context,
-  "An account with those details has already been created.",
-  type: ToastType.error,
-);
+      showAppToast(
+        context,
+        "An account with those details has already been created.",
+        type: ToastType.error,
+      );
     }
   }
 
@@ -320,9 +287,9 @@ showAppToast(
     if (_deviceId.isEmpty || _deviceId == 'Loading...') return;
     Clipboard.setData(ClipboardData(text: _deviceId));
     print("Device ID copied");
-     print("Device ID copied");
-      print("Device ID copied");
- //   showToast(context, 'Device ID copied', success: true);
+    print("Device ID copied");
+    print("Device ID copied");
+    //   showToast(context, 'Device ID copied', success: true);
   }
 
   @override
@@ -377,8 +344,9 @@ showAppToast(
                             _AuthToggle(
                               activeIndex: tab,
                               onChanged: (i) {
-                                FocusScope.of(context)
-                                    .unfocus(); // close keyboard
+                                FocusScope.of(
+                                  context,
+                                ).unfocus(); // close keyboard
                                 _loginFormKey.currentState?.reset();
                                 _signupFormKey.currentState?.reset();
                                 if (_scrollCtrl.hasClients) {
@@ -409,8 +377,9 @@ showAppToast(
                                     ),
                                     const SizedBox(height: 12),
                                     _InputCard(
-                                      fieldKey:
-                                          const ValueKey('login_password'),
+                                      fieldKey: const ValueKey(
+                                        'login_password',
+                                      ),
                                       hint: 'Password',
                                       icon: 'assets/password_icon.png',
                                       controller: _loginPassCtrl,
@@ -454,11 +423,11 @@ showAppToast(
                                             );
                                           } else if (state.loginStatus ==
                                               LoginStatus.failure) {
-                                           showAppToast(
-  context,
-  "Invalid Credentials!",
-  type: ToastType.error,
-);
+                                            showAppToast(
+                                              context,
+                                              "Invalid Credentials!",
+                                              type: ToastType.error,
+                                            );
                                           }
                                         },
                                         builder: (context, state) {
@@ -511,8 +480,7 @@ showAppToast(
                                     const SizedBox(height: 12),
 
                                     _InputCard(
-                                      fieldKey:
-                                          const ValueKey('signup_name'),
+                                      fieldKey: const ValueKey('signup_name'),
                                       hint: 'Employee Name',
                                       icon: 'assets/name_icon.png',
                                       controller: _nameCtrl,
@@ -553,13 +521,11 @@ showAppToast(
                                     const SizedBox(height: 12),
 
                                     _InputCard(
-                                      fieldKey:
-                                          const ValueKey('signup_email'),
+                                      fieldKey: const ValueKey('signup_email'),
                                       hint: 'Employee Email',
                                       icon: 'assets/email_icon.png',
                                       controller: _signupEmailCtrl,
-                                      keyboardType:
-                                          TextInputType.emailAddress,
+                                      keyboardType: TextInputType.emailAddress,
                                       validator: _validateSignupEmail,
                                     ),
                                     const SizedBox(height: 12),
@@ -573,8 +539,7 @@ showAppToast(
                                       controller: _signupPassCtrl,
                                       obscureText: _signupObscure,
                                       onToggleObscure: () => setState(
-                                        () => _signupObscure =
-                                            !_signupObscure,
+                                        () => _signupObscure = !_signupObscure,
                                       ),
                                       validator: _validateSignupPassword,
                                     ),
@@ -607,8 +572,7 @@ showAppToast(
                                       height: 56,
                                       decoration: BoxDecoration(
                                         color: Colors.white,
-                                        borderRadius:
-                                            BorderRadius.circular(16),
+                                        borderRadius: BorderRadius.circular(16),
                                         boxShadow: [
                                           BoxShadow(
                                             color: Colors.black.withOpacity(
@@ -641,234 +605,113 @@ showAppToast(
                                             ),
                                           ),
                                           const SizedBox(width: 10),
-Expanded(
-  child: SizedBox(
-    height: 60,
-    child: DropdownButtonFormField<String>(
-      isExpanded: true,
+                                          Expanded(
+                                            child: SizedBox(
+                                              height: 60,
+                                              child: DropdownButtonFormField<String>(
+                                                isExpanded: true,
 
-      // 🔹 Text starts from the left
-      alignment: Alignment.centerLeft,
+                                                // 🔹 Text starts from the left
+                                                alignment: Alignment.centerLeft,
 
-      // 🔹 Hint text (left aligned)
-      hint: const Text(
-        'Channel Type',
-      ),
+                                                // 🔹 Hint text (left aligned)
+                                                hint: const Text(
+                                                  'Channel Type',
+                                                ),
 
-      style: const TextStyle(
-        fontFamily: 'ClashGrotesk',
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
-        letterSpacing: 0.3,
-      ),
+                                                style: const TextStyle(
+                                                  fontFamily: 'ClashGrotesk',
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.black,
+                                                  letterSpacing: 0.3,
+                                                ),
 
-      decoration: const InputDecoration(
-        border: InputBorder.none,
-        isCollapsed: true,
-        contentPadding: EdgeInsets.only(top: 15),
-        hintText: 'Select Channel Type',
-        hintStyle: TextStyle(
-          fontFamily: 'ClashGrotesk',
-          color: Colors.black54,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.3,
-        ),
-      ),
-      icon: Padding(
-        padding: const EdgeInsets.only(top:14.0),
-        child: Icon(
-              Icons.expand_more_rounded,
-              size: 29,
-            ),
-      ),
-      
-     /* Container(
-        height:42,
-        width: 34,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color:  Colors.grey,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: ShaderMask(
-          blendMode: BlendMode.srcIn,
-          shaderCallback: (Rect bounds) {
-            return const LinearGradient(
-              colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ).createShader(bounds);
-          },
-          child: const Icon(
-            Icons.expand_more_rounded,
-            size: 20,
-          ),
-        ),
-      ),*/
+                                                decoration:
+                                                    const InputDecoration(
+                                                      border: InputBorder.none,
+                                                      isCollapsed: true,
+                                                      contentPadding:
+                                                          EdgeInsets.only(
+                                                            top: 15,
+                                                          ),
+                                                      hintText:
+                                                          'Select Channel Type',
+                                                      hintStyle: TextStyle(
+                                                        fontFamily:
+                                                            'ClashGrotesk',
+                                                        color: Colors.black54,
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        letterSpacing: 0.3,
+                                                      ),
+                                                    ),
+                                                icon: Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        top: 14.0,
+                                                      ),
+                                                  child: Icon(
+                                                    Icons.expand_more_rounded,
+                                                    size: 29,
+                                                  ),
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                                dropdownColor: Colors.white,
+                                                menuMaxHeight: 320,
+                                                items:
+                                                    const [
+                                                          'GT',
+                                                          'LMT',
+                                                          'IMT',
+                                                          'OOH',
+                                                          'HORECA',
+                                                          'BS',
+                                                          'N/A',
+                                                        ]
+                                                        .map(
+                                                          (
+                                                            e,
+                                                          ) => DropdownMenuItem<String>(
+                                                            value: e,
+                                                            alignment: Alignment
+                                                                .centerLeft, // 🔹 Start from left
+                                                            child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets.symmetric(
+                                                                    vertical: 3,
+                                                                  ),
+                                                              child: Text(
+                                                                e,
+                                                                style: const TextStyle(
+                                                                  fontFamily:
+                                                                      'ClashGrotesk',
+                                                                  fontSize: 14,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  letterSpacing:
+                                                                      0.3,
+                                                                  color: Colors
+                                                                      .black,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        )
+                                                        .toList(),
 
-      borderRadius: BorderRadius.circular(14),
-      dropdownColor: Colors.white,
-      menuMaxHeight: 320,
-
-      items: const [
-        'GT',
-        'LMT',
-        'IMT',
-        'OOH',
-        'HORECA',
-        'BS',
-        'N/A',
-      ].map(
-        (e) => DropdownMenuItem<String>(
-          value: e,
-          alignment: Alignment.centerLeft, // 🔹 Start from left
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 3),
-            child: Text(
-              e,
-              style: const TextStyle(
-                fontFamily: 'ClashGrotesk',
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.3,
-                color: Colors.black,
-              ),
-            ),
-          ),
-        ),
-      ).toList(),
-
-      onChanged: (v) => setState(() {
-        _channelType = v;
-      }),
-      validator: (v) => v == null ? 'Please select' : null,
-    ),
-  ),
-),
-
-
-                                          // Expanded(
-                                          //   child:
-                                          //       Container(
-                                          //         height: 60,
-                                          //         child: DropdownButtonFormField<String>(
-                                          //                                                       hint: Padding(
-                                          //         padding: const EdgeInsets.only(top:15.0),
-                                          //         child: const Text(
-                                          //           'Channel Type',
-                                          //         ),
-                                          //                                                       ),
-                                          //                                                       isExpanded: true,
-                                          //                                                       alignment:
-                                          //           Alignment.centerLeft,
-                                          //                                                       style: const TextStyle(
-                                          //         fontFamily: 'ClashGrotesk',
-                                          //         fontSize: 16,
-                                          //         fontWeight: FontWeight.w600,
-                                          //         color: Colors.black,
-                                          //         letterSpacing: 0.3,
-                                          //                                                       ),
-                                          //                                                       decoration:
-                                          //           const InputDecoration(
-                                          //         border: InputBorder.none,
-                                          //         isCollapsed: true,
-                                          //         contentPadding:
-                                          //             EdgeInsets.zero,
-                                          //         hintText:
-                                          //             'Select Channel Type',
-                                          //         hintStyle: TextStyle(
-                                          //           fontFamily:
-                                          //               'ClashGrotesk',
-                                          //           color: Colors.black54,
-                                          //           fontSize: 16,
-                                          //           fontWeight:
-                                          //               FontWeight.w600,
-                                          //           letterSpacing: 0.3,
-                                          //         ),
-                                          //                                                       ),
-                                          //                                                       icon: Container(
-                                          //         height: 87,
-                                          //         width: 34,
-                                          //         alignment:
-                                          //             Alignment.center,
-                                          //         decoration: BoxDecoration(
-                                          //           color: const Color(
-                                          //             0xFFEDE7FF,
-                                          //           ),
-                                          //           borderRadius:
-                                          //               BorderRadius.circular(
-                                          //             12,
-                                          //           ),
-                                          //         ),
-                                          //         child: const Icon(
-                                          //           Icons
-                                          //               .expand_more_rounded,
-                                          //           size: 20,
-                                          //           color:
-                                          //               Color(0xFF7F53FD),
-                                          //         ),
-                                          //                                                       ),
-                                          //                                                       borderRadius:
-                                          //           BorderRadius.circular(
-                                          //         14,
-                                          //                                                       ),
-                                          //                                                       dropdownColor:
-                                          //           Colors.white,
-                                          //                                                       menuMaxHeight: 320,
-                                          //                                                       items: const [
-                                          //         'GT',
-                                          //         'LMT',
-                                          //         'IMT',
-                                          //         'OOH',
-                                          //         'HORECA',
-                                          //         'BS',
-                                          //         'N/A',
-                                          //                                                       ]
-                                          //           .map(
-                                          //             (e) =>
-                                          //                 DropdownMenuItem<
-                                          //                     String>(
-                                          //               value: e,
-                                          //               alignment: Alignment
-                                          //                   .centerLeft,
-                                          //               child: Padding(
-                                          //                 padding:
-                                          //                     const EdgeInsets
-                                          //                         .symmetric(
-                                          //                   vertical: 3,
-                                          //                 ),
-                                          //                 child: Text(
-                                          //                   e,
-                                          //                   style:
-                                          //                       const TextStyle(
-                                          //                     fontFamily:
-                                          //                         'ClashGrotesk',
-                                          //                     fontSize: 14,
-                                          //                     fontWeight:
-                                          //                         FontWeight
-                                          //                             .w600,
-                                          //                     letterSpacing:
-                                          //                         0.3,
-                                          //                     color: Colors
-                                          //                         .black,
-                                          //                   ),
-                                          //                 ),
-                                          //               ),
-                                          //             ),
-                                          //           )
-                                          //           .toList(),
-                                          //                                                       onChanged: (v) =>
-                                          //           setState(() {
-                                          //         _channelType = v;
-                                          //                                                       }),
-                                          //                                                       validator: (v) => v == null
-                                          //           ? 'Please select'
-                                          //           : null,
-                                          //                                                     ),
-                                          //       ),
-                                          // ),
+                                                onChanged: (v) => setState(() {
+                                                  _channelType = v;
+                                                }),
+                                                validator: (v) => v == null
+                                                    ? 'Please select'
+                                                    : null,
+                                              ),
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -891,8 +734,7 @@ Expanded(
                                     const SizedBox(height: 18),
 
                                     _FooterSwitch(
-                                      prompt:
-                                          "Already have an account? ",
+                                      prompt: "Already have an account? ",
                                       action: "Login",
                                       onTap: () => setState(() {
                                         if (_scrollCtrl.hasClients) {
@@ -923,8 +765,10 @@ Expanded(
               child: GestureDetector(
                 onTap: () => _copyDeviceId(context),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.68),
                     borderRadius: BorderRadius.circular(16),
@@ -1427,8 +1271,7 @@ class _PrimaryGradientButton extends StatelessWidget {
                       width: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
                   : Text(
