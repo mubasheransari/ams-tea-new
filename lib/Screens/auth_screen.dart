@@ -7,6 +7,8 @@ import 'package:new_amst_flutter/Bloc/auth_event.dart';
 import 'package:new_amst_flutter/Bloc/auth_state.dart';
 import 'package:new_amst_flutter/Repository/repository.dart';
 import 'package:new_amst_flutter/Screens/app_shell.dart';
+import 'package:new_amst_flutter/Widgets/custom_Dialogs.dart';
+import 'package:new_amst_flutter/Widgets/custom_toast_widget.dart';
 import 'package:new_amst_flutter/Widgets/watermarked_widget.dart';
 import 'dart:ui' as ui;
 import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
@@ -293,15 +295,24 @@ class _AuthScreenState extends State<AuthScreen> {
     print("api message $parsed");
 
     if (parsed.message.contains('Already') == false) {
-      print("Account Created Successfully");
-      print("Account Created Successfully");
-      print("Account Created Successfully");
-      // showToast(context, "Account Created Successfully", success: parsed.ok);
+
+          await showAccountCreatedDialog(context);
+
+          setState(() {
+                                        if (_scrollCtrl.hasClients) {
+                                          _scrollCtrl.jumpTo(0);
+                                        }
+                                        tab = 0;
+                                        _scrollY = 0;
+                                      });
+
     } else {
-      print("NOT Created Successfully");
-      print("NOT Created Successfully");
-      print("NOT Created Successfully");
-    //  showToast(context, parsed.message, success: false);
+    
+showAppToast(
+  context,
+  "Invalid Credentials!",
+  type: ToastType.error,
+);
     }
   }
 
