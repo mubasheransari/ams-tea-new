@@ -106,9 +106,8 @@ class Repository {
     required String action, // "IN" | "OUT"
     required String attTime, // "13:06:57"
     required String attDate, // "24-Jun-2025"
-    required String remarks, // "0"
-    required String appVersion, // "1.1"
-    required String regtoken, // "0"
+
+
   }) async {
     final payload = <String, dynamic>{
       "type": type,
@@ -120,9 +119,9 @@ class Repository {
       "action": action,
       "att_time": attTime,
       "att_date": attDate,
-      "remarks": remarks,
-      "app_version": appVersion,
-      "regtoken": regtoken,
+      "remarks": "jhvrbjhvbre",
+      "app_version": "2.0.2",
+      "regtoken": "0",
     };
 
     final body = {"request": jsonEncode(payload)};

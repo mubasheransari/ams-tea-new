@@ -28,7 +28,83 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
+
   Future<void> _onLogin(LoginEvent e, Emitter<AuthState> emit) async {
+  emit(state.copyWith(loginStatus: LoginStatus.loading, error: null));
+
+  final now = DateTime.now();
+  final attTime = DateFormat('HH:mm:ss').format(now);
+  final attDate = DateFormat('dd-MMM-yyyy').format(now);
+
+  try {
+    final http.Response res = await repo.login(
+      email: e.email,
+      pass: e.password,
+      latitude: "24.8870845",
+      longitude: "66.9788333",
+      actType: "LOGIN",
+      action: "IN",
+      attTime: attTime,
+      attDate: attDate,
+      appVersion: "2.0.2",
+      add: "fyghfshfohfor",
+      deviceId: "0d6bb3238ca24544",
+    );
+
+    debugPrint("BODY ${res.body}");
+
+    if (res.statusCode == 200) {
+      final body = jsonDecode(res.body);
+
+      // backend style: {"status":"0","message":"Invalid Login Details !", ...}
+      final status = body['status']?.toString();
+      final message = body['message']?.toString() ?? 'Unknown error';
+
+      if (status == '1') {
+        // ✅ success case
+        final model = LoginModel.fromJson(body);
+        await LocalSession.saveLogin(model);
+
+        emit(
+          state.copyWith(
+            loginModel: model,
+            loginStatus: LoginStatus.success,
+            error: null,
+          ),
+        );
+      } else {
+        // ❌ business failure (status == "0" or anything else)
+        await LocalSession.clearLogin();
+        emit(
+          state.copyWith(
+            loginStatus: LoginStatus.failure,
+            error: message.isEmpty ? 'Invalid login' : message,
+          ),
+        );
+      }
+    } else {
+      // ❌ HTTP error
+      await LocalSession.clearLogin();
+      emit(
+        state.copyWith(
+          loginStatus: LoginStatus.failure,
+          error: 'Login failed (${res.statusCode})',
+        ),
+      );
+    }
+  } catch (err) {
+    await LocalSession.clearLogin();
+    emit(
+      state.copyWith(
+        loginStatus: LoginStatus.failure,
+        error: '$err',
+      ),
+    );
+  }
+}
+
+
+ /* Future<void> _onLogin(LoginEvent e, Emitter<AuthState> emit) async {
     emit(state.copyWith(loginStatus: LoginStatus.loading, error: null));
 
     final now = DateTime.now();
@@ -50,6 +126,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         deviceId: "0d6bb3238ca24544",
       );
 
+      print("BODY ${res.body}");
+      print("BODY ${res.body}");
+      print("BODY ${res.body}");
+      print("BODY ${res.body}");
+
       if (res.statusCode == 200) {
         // Parse -> model
         final map = jsonDecode(res.body);
@@ -67,7 +148,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(state.copyWith(loginStatus: LoginStatus.failure, error: '$err'));
     }
   }
-
+*/
   Future<void> _getLeavesTypes(GetLeavesTypeEvent event, Emitter<AuthState> emit) async {
     emit(state.copyWith(getLeavesTypeStatus: GetLeavesTypeStatus.loading, error: null));
     try {

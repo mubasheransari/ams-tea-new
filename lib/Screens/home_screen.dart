@@ -341,12 +341,26 @@ class MarkAttendanceWidget extends StatelessWidget {
                 SizedBox(height: 34),
                 InkWell(
                   onTap: () {
-                    Navigator.of(context, rootNavigator: true).push(
-                      MaterialPageRoute(
-                        builder: (_) => const MarkAttendanceView(),
-                        fullscreenDialog: true,
-                      ),
-                    );
+                    final authBloc = context.read<AuthBloc>();
+
+Navigator.of(context, rootNavigator: true).push(
+  MaterialPageRoute(
+    fullscreenDialog: true,
+    builder: (_) => BlocProvider<AuthBloc>.value(
+      value: authBloc,
+      child:  MarkAttendanceView(code: context.read<AuthBloc>().state.loginModel!.userinfo!.code.toString(),),
+    ),
+  ),
+);
+
+
+                    
+                    // Navigator.of(context, rootNavigator: true).push(
+                    //   MaterialPageRoute(
+                    //     builder: (_) => const MarkAttendanceView(),
+                    //     fullscreenDialog: true,
+                    //   ),
+                    // );
                   },
                   child: _ChipButtonGradient(
                     s: s,

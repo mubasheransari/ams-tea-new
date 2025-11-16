@@ -3,15 +3,12 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:location/location.dart' as loc;
 import 'package:geocoding/geocoding.dart' as geo;
 import 'package:new_amst_flutter/Repository/repository.dart';
-import 'package:new_amst_flutter/bloc/auth_bloc.dart';
 
 const _kPrimaryGrad = LinearGradient(
   colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)],
@@ -140,27 +137,16 @@ class _GlassChip extends StatelessWidget {
 }
 
 class MarkAttendanceView extends StatefulWidget {
-  const MarkAttendanceView({super.key});
+  String code;
+   MarkAttendanceView({super.key,required this.code});
 
   @override
   State<MarkAttendanceView> createState() => _MarkAttendanceViewState();
 }
 
 class _MarkAttendanceViewState extends State<MarkAttendanceView> {
-  // ===== Brand / gradient =====
-  static const LinearGradient kPrimaryGrad = LinearGradient(
-    colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)],
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-  );
 
-  // ===== Colors (kept your palette) =====
-  static const Color orange = Color(0xFFEA7A3B);
-  static const Color text = Color(0xFF1E1E1E);
-  static const Color muted = Color(0xFF707883);
-  static const Color field = Color(0xFFF2F3F5);
-  static const Color card = Colors.white;
-  static const Color _shadow = Color(0x14000000);
+
 
   final loc.Location location = loc.Location();
   late GoogleMapController _mapController;
@@ -182,6 +168,9 @@ class _MarkAttendanceViewState extends State<MarkAttendanceView> {
   @override
   void initState() {
     super.initState();
+    print("CODE ${widget.code}");
+        print("CODE ${widget.code}");
+            print("CODE ${widget.code}");
     _initMap();
     _updateTime();
     Timer.periodic(const Duration(seconds: 1), (_) => _updateTime());
@@ -200,7 +189,7 @@ class _MarkAttendanceViewState extends State<MarkAttendanceView> {
     final data = await rootBundle.load(path);
     final codec = await ui.instantiateImageCodec(
       data.buffer.asUint8List(),
-      targetWidth: width, // <= marker width in logical px
+      targetWidth: width, 
     );
     final frame = await codec.getNextFrame();
     final bytes = (await frame.image.toByteData(
@@ -397,23 +386,12 @@ class _MarkAttendanceViewState extends State<MarkAttendanceView> {
                             ),
                           ),
 
-                          // IconButton(
-                          //   onPressed: _recenterToCurrentLocation,
-                          //   icon:  Icon(Icons.my_location, color: _kPrimaryGrad),
-                          // ),
+                      
                         ],
                       ),
                     ),
 
-                    // const SizedBox(height: 20),
-
-                    // const Row(
-                    //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    //   children: [
-                    //     _PunchCard(title: "Punch In", time: "--:--", lightOnGradient: true),
-                    //     _PunchCard(title: "Punch Out", time: "--:--", lightOnGradient: true),
-                    //   ],
-                    // ),
+               
                     const SizedBox(height: 18),
 
                     Center(
@@ -430,23 +408,14 @@ class _MarkAttendanceViewState extends State<MarkAttendanceView> {
                             ).format(now);
                             await Repository().submitAttendance(
                               type: 1,
-                              code: context
-                                  .read<AuthBloc>()
-                                  .state
-                                  .loginModel!
-                                  .userinfo!
-                                  .code
-                                  .toString(),
+                              code: "306232",
                               latitude: "24.8871334",
                               longitude: "66.9788572",
                               deviceId: "3d61adab1be4b2f2",
                               actType: "ATTENDANCE",
                               action: "IN",
-                              appVersion: "2.0.2",
                               attTime: attTime,
                               attDate: attDate,
-                              remarks: 'vtrg',
-                              regtoken: '0d6bb3238ca24544',
                             );
                           },
                         ),
