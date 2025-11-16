@@ -38,7 +38,7 @@ void showAppToast(
   final availableH = mq.size.height - keyboard;
   final bottomOffset = (availableH / 2) - 20;
 
-  final safeBottom = bottomOffset.clamp(20.0, availableH - 80.0);
+  final safeBottom = bottomOffset.clamp(20.0, availableH - 100.0);
 
   ScaffoldMessenger.of(context).hideCurrentSnackBar();
 

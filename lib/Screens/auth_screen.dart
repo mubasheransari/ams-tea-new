@@ -310,7 +310,7 @@ class _AuthScreenState extends State<AuthScreen> {
     
 showAppToast(
   context,
-  "Invalid Credentials!",
+  "An account with those details has already been created.",
   type: ToastType.error,
 );
     }
@@ -454,12 +454,11 @@ showAppToast(
                                             );
                                           } else if (state.loginStatus ==
                                               LoginStatus.failure) {
-                                            // showToast(
-                                            //   context,
-                                            //   state.errorMessage ??
-                                            //       'Login failed',
-                                            //   success: false,
-                                            // );
+                                           showAppToast(
+  context,
+  "Invalid Credentials!",
+  type: ToastType.error,
+);
                                           }
                                         },
                                         builder: (context, state) {
