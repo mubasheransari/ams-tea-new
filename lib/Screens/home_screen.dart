@@ -348,7 +348,7 @@ class MarkAttendanceWidget extends StatelessWidget {
                       ),
                     );
                   },
-                  child: _ChipButtonWhite(
+                  child: _ChipButtonGradient(
                     s: s,
                     icon: 'assets/attendance_icons.png',
                     label: 'Mark Attendance',
@@ -440,7 +440,7 @@ class ApplyLeaveWidget extends StatelessWidget {
                     );
 
                   },
-                  child: _ChipButtonWhite(
+                  child: _ChipButtonGradient(
                     s: s,
                     icon: 'assets/attendance_icons.png',
                     label: 'Apply Leave',
@@ -464,17 +464,32 @@ class SalesWidget extends StatelessWidget {
     return Container(
       height: 219 * s,
       width: MediaQuery.of(context).size.width * 0.90,
-      decoration: BoxDecoration(
-        color: Colors.white,
+           decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)], 
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(9 * s),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 18 * s,
+            color: const Color(0xFF7F53FD).withOpacity(0.25),
+            blurRadius: 20 * s,
             offset: Offset(0, 10 * s),
           ),
         ],
       ),
+      // decoration: BoxDecoration(
+      //   color: Colors.white,
+      //   borderRadius: BorderRadius.circular(9 * s),
+      //   boxShadow: [
+      //     BoxShadow(
+      //       color: Colors.black.withOpacity(0.06),
+      //       blurRadius: 18 * s,
+      //       offset: Offset(0, 10 * s),
+      //     ),
+      //   ],
+      // ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
@@ -498,7 +513,7 @@ class SalesWidget extends StatelessWidget {
                 GradientText(
                   'Daily\nSales',
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
+                    colors: [Colors.white, Colors.white],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
@@ -511,10 +526,10 @@ class SalesWidget extends StatelessWidget {
                 ),
                 SizedBox(height: 6 * s),
                 Text(
-                  'Enter daily sales\n& track your sales.',
+                  'Enter daily sales and\n track your sales.',
                   style: TextStyle(
                     fontFamily: 'ClashGrotesk',
-                    color: Color(0xFF444B59),
+                    color: Colors.white,
                     fontSize: 16.5 * s,
                     fontWeight: FontWeight.w600,
                     height: 1.25,
@@ -525,7 +540,7 @@ class SalesWidget extends StatelessWidget {
                   onTap: (){
                     Navigator.push(context, MaterialPageRoute(builder: (context)=> LocalTeaCatalogSkuOnly()));
                   },
-                  child: _ChipButtonGradient(s: s, label: 'Enter your Sales')),
+                  child: _ChipButtonGradient(s: s, label: 'Enter your Sales', icon: 'assets/sales_button_icon.png',)),
               ],
             ),
           ),
@@ -582,8 +597,9 @@ class _ChipButtonWhite extends StatelessWidget {
 }
 
 class _ChipButtonGradient extends StatelessWidget {
-  const _ChipButtonGradient({required this.s, required this.label});
-  final double s;
+  const _ChipButtonGradient({required this.s, required this.label,required this.icon});
+    final double s;
+  final String icon;
   final String label;
 
   @override
@@ -608,7 +624,7 @@ class _ChipButtonGradient extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Image.asset(
-            'assets/sales_button_icon.png',
+            icon,//'assets/sales_button_icon.png',
             height: 22 * s,
             width: 22 * s,
           ),
