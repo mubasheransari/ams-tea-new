@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:new_amst_flutter/Screens/attendance_history_screen.dart';
 import 'package:new_amst_flutter/Screens/home_screen.dart';
 import 'package:new_amst_flutter/Screens/profile_screen.dart' show ProfilePage;
 import 'package:new_amst_flutter/Screens/report_history_screen.dart';
+import 'package:new_amst_flutter/Screens/tabbar_screen_history.dart';
 import '../Widgets/bottom_bar.dart';
 
 
@@ -64,7 +66,7 @@ class _AppShellState extends State<AppShell> {
           index: _stackIndex,
           children: [
             _TabNavigator(navKey: _navKeys[BottomTab.home]!,    initial: const HomeScreen()),
-            _TabNavigator(navKey: _navKeys[BottomTab.reports]!, initial: const ReportHistoryScreen()),
+            _TabNavigator(navKey: _navKeys[BottomTab.reports]!, initial: HistoryTabsScreen()), //AttendanceHistoryScreen()),//ReportHistoryScreen()),
             _TabNavigator(navKey: _navKeys[BottomTab.profile]!, initial: const ProfilePage()),
           ],
         ),

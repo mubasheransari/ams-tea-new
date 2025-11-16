@@ -392,7 +392,7 @@ Future<void> _downloadPdf(OrderRecord r) async {
             padding: EdgeInsets.fromLTRB(16 * s, 8 * s, 16 * s, 140 * s + padBottom),
             children: [
               // Title (unchanged)
-              Row(
+            /*  Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Padding(
@@ -411,7 +411,7 @@ Future<void> _downloadPdf(OrderRecord r) async {
                   const SizedBox(width: 48),
                 ],
               ),
-              SizedBox(height: 10 * s),
+              SizedBox(height: 10 * s),*/
 
               _FiltersBar(
                 s: s,
@@ -427,8 +427,8 @@ Future<void> _downloadPdf(OrderRecord r) async {
                 )
               else if (_filtered.isEmpty)
                 Padding(
-                  padding: EdgeInsets.only(top: 40 * s),
-                  child: const Center(child: Text('No reports yet')),
+                  padding: EdgeInsets.only(top: MediaQuery.of(context).size.height *0.25),
+                  child: const Center(child: Text('No sales reports available yet!',style: TextStyle(      fontFamily: 'ClashGrotesk',fontWeight: FontWeight.bold),)),
                 )
               else
                 ..._filtered.map((r) => Padding(
