@@ -596,7 +596,7 @@ class _QtyControlsSku extends StatelessWidget {
   Widget build(BuildContext context) {
     if (qty <= 0) {
       return SizedBox(
-        width: 96,
+        width: 78,
         child: _PrimaryGradButton(text: 'ADD', onPressed: onInc),
       );
     }
@@ -803,6 +803,8 @@ class _PrimaryGradButton extends StatelessWidget {
     return Opacity(
       opacity: disabled ? 0.7 : 1,
       child: Container(
+        height: 37,
+    
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           gradient: _kGrad,

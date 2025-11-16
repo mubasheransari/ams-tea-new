@@ -1,11 +1,9 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:new_amst_flutter/Widgets/watermarked_widget.dart';
 
-import '../bloc/auth_bloc.dart';           
 
 class ApplyLeaveScreen extends StatefulWidget {
   const ApplyLeaveScreen({super.key});
@@ -92,53 +90,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     }
   }
 
- /* Future<void> _submit() async {
-    if (_submitting) return;
-    if (!_formKey.currentState!.validate()) return;
 
-    if (_leaveTypeId == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Select leave type')));
-      return;
-    }
-    if (_fullHalf == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Select Full/Half')));
-      return;
-    }
-
-    setState(() => _submitting = true);
-    try {
-      final repo = Repository(); // or use RepositoryProvider if you already provide it
-      final res = await repo.insertLeaveData(
-        userId:   _userIdCtrl.text.trim(),
-        leaveType: _leaveTypeId!,
-        fullHalf: _fullHalf!,
-        fDate:    _fromCtrl.text.trim(),
-        tDate:    _toCtrl.text.trim(),
-        desc:     _descCtrl.text.trim(),
-      );
-
-      final ok = res.status == '1';
-      if (ok) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(res.message ?? 'Leave applied')),
-        );
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: ${res.message ?? 'unknown_error'}')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Exception: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
-  }
-*/
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -159,7 +111,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       ),
       body: Stack(
         children: [
-          const _WatermarkTiledSmall(tileScale: 25.0),
+           WatermarkTiledSmall(tileScale: 25.0),
           SafeArea(
             child: Center(
               child: Padding(
@@ -430,132 +382,6 @@ class _DropdownModern extends StatelessWidget {
 }
 
 
-/* ---------- Lightweight styled pieces (match your Auth look) ---------- */
-
-// class _InputCardModern extends StatelessWidget {
-//   const _InputCardModern({
-//     required this.hint,
-//     required this.iconAsset,
-//     this.controller,
-//     this.validator,
-//     this.maxLines = 1,
-//   });
-
-//   final String hint;
-//   final String iconAsset;
-//   final TextEditingController? controller;
-//   final TextInputType? keyboardType;
-//   final String? Function(String?)? validator;
-//   final int maxLines;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       decoration: _kCardDeco,
-//       padding: const EdgeInsets.symmetric(horizontal: 14),
-//       child: Row(
-//         crossAxisAlignment: maxLines == 1 ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-//         children: [
-//           Image.asset(iconAsset, height: 17, width: 17, color: const Color(0xFF1B1B1B)),
-//           const SizedBox(width: 10),
-//           Expanded(
-//             child: TextFormField(
-//               controller: controller,
-//               keyboardType: keyboardType,
-//               validator: validator,
-//               maxLines: maxLines,
-//               style: const TextStyle(
-//                 fontFamily: 'ClashGrotesk',
-//                 color: Colors.black,
-//                 fontSize: 16,
-//                 fontWeight: FontWeight.w600,
-//               ),
-//               decoration: InputDecoration(
-//                 hintText: hint,
-//                 border: InputBorder.none,
-//                 isCollapsed: true,
-//                 hintStyle: const TextStyle(
-//                   fontFamily: 'ClashGrotesk',
-//                   color: Colors.black54,
-//                   fontSize: 16,
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// class _DropdownModern extends StatelessWidget {
-//   const _DropdownModern({
-//     required this.hint,
-//     required this.items,
-//     required this.onChanged,
-//     this.value,
-//     this.validator,
-//   });
-
-//   final String hint;
-//   final List<DropdownMenuItem<String>> items;
-//   final String? value;
-//   final String? Function(String?)? validator;
-//   final void Function(String?)? onChanged;
-//   final Widget? disabledHint;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       height: 56,
-//       decoration: _kCardDeco,
-//       padding: const EdgeInsets.symmetric(horizontal: 12),
-//       child: DropdownButtonFormField<String>(
-//         initialValue: value,
-//         items: items,
-//         onChanged: onChanged,
-//         validator: validator,
-//         isExpanded: true,
-//         decoration: const InputDecoration(
-//           border: InputBorder.none,
-//           isCollapsed: true,
-//           contentPadding: EdgeInsets.zero,
-//         ),
-//         hint: Text(
-//           hint,
-//           textAlign: TextAlign.center,
-//           style: const TextStyle(
-//             fontFamily: 'ClashGrotesk',
-//             color: Colors.black54,
-//             fontSize: 16,
-//             fontWeight: FontWeight.w600,
-//           ),
-//         ),
-//         disabledHint: disabledHint,
-//         icon: Container(
-//           height: 36,
-//           width: 34,
-//           alignment: Alignment.center,
-//           decoration: BoxDecoration(
-//             color: const Color(0xFFEDE7FF),
-//             borderRadius: BorderRadius.circular(12),
-//           ),
-//           child: const Icon(Icons.expand_more_rounded, size: 20, color: Color(0xFF7F53FD)),
-//         ),
-//         borderRadius: BorderRadius.circular(14),
-//         dropdownColor: Colors.white,
-//         menuMaxHeight: 300,
-//         style: const TextStyle(
-//           fontFamily: 'ClashGrotesk',
-//           fontSize: 16,
-//           fontWeight: FontWeight.w700,
-//           color: Colors.black,
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 class _DateCard extends StatelessWidget {
   const _DateCard({
     required this.label,
@@ -690,14 +516,5 @@ class _PrimaryGradientButton extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _WatermarkTiledSmall extends StatelessWidget {
-  const _WatermarkTiledSmall({required this.tileScale});
-  final double tileScale;
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox.shrink(); // replace with your existing Watermark if needed
   }
 }

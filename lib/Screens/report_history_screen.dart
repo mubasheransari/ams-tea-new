@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:new_amst_flutter/Screens/home_screen.dart';
 import 'package:new_amst_flutter/Screens/location_google_maos.dart' hide BottomTab;
 import 'package:new_amst_flutter/Screens/products.dart';
 import 'dart:typed_data';
@@ -312,70 +313,317 @@ Future<void> _downloadPdf(OrderRecord r) async {
         ),
       );
 
-  Future<_DlgAction?> _showActionDialog(BuildContext context) {
-    return showGeneralDialog<_DlgAction>(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 250),
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return Center(
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              width: 320,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white, borderRadius: BorderRadius.circular(16)),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Report', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 12),
-                  const Text('View or download a PDF for this order.'),
-                  const SizedBox(height: 16),
-                  Row(
+      Future<_DlgAction?> _showActionDialog(BuildContext context) {
+  final s = MediaQuery.sizeOf(context).width / 390.0;
+
+  return showGeneralDialog<_DlgAction>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    barrierColor: Colors.black54,
+    transitionDuration: const Duration(milliseconds: 250),
+    pageBuilder: (context, animation, secondaryAnimation) {
+      return Center(
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            width: 330 * s,
+            padding: EdgeInsets.fromLTRB(18 * s, 18 * s, 18 * s, 16 * s),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20 * s),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.10),
+                  blurRadius: 18 * s,
+                  offset: Offset(0, 10 * s),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // gradient chip heading
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10 * s,
+                    vertical: 6 * s,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: kGradBluePurple,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.visibility_rounded),
-                          onPressed: () => Navigator.of(context).pop(_DlgAction.view),
-                          label: const Text('View'),
-                        ),
+                      const Icon(
+                        Icons.picture_as_pdf_rounded,
+                        size: 18,
+                        color: Colors.white,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          icon: const Icon(Icons.download_rounded),
-                          onPressed: () => Navigator.of(context).pop(_DlgAction.download),
-                          label: const Text('Download'),
+                      SizedBox(width: 6 * s),
+                      const Text(
+                        'Report Options',
+                        style: TextStyle(
+                          fontFamily: 'ClashGrotesk',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+
+                SizedBox(height: 14 * s),
+
+                // main title
+                Text(
+                  'What would you like to do?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'ClashGrotesk',
+                    fontSize: 18 * s,
+                    fontWeight: FontWeight.w800,
+                    color: kTxtDark,
+                  ),
+                ),
+
+                SizedBox(height: 10 * s),
+
+                // subtitle
+                Text(
+                  'You can quickly preview this report on screen or download a PDF copy for your records.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'ClashGrotesk',
+                    fontSize: 13.5 * s,
+                    height: 1.35,
+                    color: kTxtDim,
+                  ),
+                ),
+
+                SizedBox(height: 18 * s),
+
+                Row(
+                  children: [
+
+                                 Expanded(
+  child: Container(
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ),
+      borderRadius: BorderRadius.circular(12 * s),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF7F53FD).withOpacity(0.22),
+          blurRadius: 14 * s,
+          offset: Offset(0, 6 * s),
+        ),
+      ],
+    ),
+    child: ElevatedButton.icon(
+      icon: const Icon(Icons.visibility_rounded, size: 18,  color: Colors.white),
+      label: const Text(
+        'View',
+        style: TextStyle(
+          fontFamily: 'ClashGrotesk',
+          fontWeight: FontWeight.w800,
+          color: Colors.white
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        elevation: 0,
+        padding: EdgeInsets.symmetric(
+          horizontal: 8 * s,
+          vertical: 10 * s,
+        ),
+        backgroundColor: Colors
+            .transparent, // let gradient from parent show through
+        shadowColor: Colors.transparent,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12 * s),
+        ),
+      ),
+      onPressed: () =>
+          Navigator.of(context).pop(_DlgAction.view),
+    ),
+  ),
+),
+                    // VIEW button - outlined, gradient border
+                    // Expanded(
+                    //   child: OutlinedButton.icon(
+                    //     icon: const Icon(Icons.visibility_rounded, size: 18),
+                    //     label: const Text(
+                    //       'View',
+                    //       style: TextStyle(
+                    //         fontFamily: 'ClashGrotesk',
+                    //         fontWeight: FontWeight.w700,
+                    //       ),
+                    //     ),
+                    //     style: OutlinedButton.styleFrom(
+                    //       padding: EdgeInsets.symmetric(
+                    //           horizontal: 8 * s, vertical: 10 * s),
+                    //       side: const BorderSide(
+                    //         color: Color(0xFF7F53FD),
+                    //         width: 1.2,
+                    //       ),
+                    //       shape: RoundedRectangleBorder(
+                    //         borderRadius: BorderRadius.circular(12 * s),
+                    //       ),
+                    //       foregroundColor: const Color(0xFF4B5563),
+                    //     ),
+                    //     onPressed: () =>
+                    //         Navigator.of(context).pop(_DlgAction.view),
+                    //   ),
+                    // ),
+                    SizedBox(width: 12 * s),
+
+                    // DOWNLOAD button - solid gradient
+             Expanded(
+  child: Container(
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ),
+      borderRadius: BorderRadius.circular(12 * s),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF7F53FD).withOpacity(0.22),
+          blurRadius: 14 * s,
+          offset: Offset(0, 6 * s),
+        ),
+      ],
+    ),
+    child: ElevatedButton.icon(
+      icon: const Icon(Icons.download_rounded, size: 18,  color: Colors.white),
+      label: const Text(
+        'Download',
+        style: TextStyle(
+          fontFamily: 'ClashGrotesk',
+          fontWeight: FontWeight.w800,
+          color: Colors.white
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        elevation: 0,
+        padding: EdgeInsets.symmetric(
+          horizontal: 8 * s,
+          vertical: 10 * s,
+        ),
+        backgroundColor: Colors
+            .transparent, // let gradient from parent show through
+        shadowColor: Colors.transparent,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12 * s),
+        ),
+      ),
+      onPressed: () =>
+          Navigator.of(context).pop(_DlgAction.download),
+    ),
+  ),
+)
+
+                  ],
+                ),
+              ],
             ),
           ),
-        );
-      },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final curved = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
-        );
-        return FadeTransition(
-          opacity: curved,
-          child: SlideTransition(
-            position: Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero).animate(curved),
-            child: child,
-          ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.06),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
+
+  // Future<_DlgAction?> _showActionDialog(BuildContext context) {
+  //   return showGeneralDialog<_DlgAction>(
+  //     context: context,
+  //     barrierDismissible: true,
+  //     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+  //     barrierColor: Colors.black54,
+  //     transitionDuration: const Duration(milliseconds: 250),
+  //     pageBuilder: (context, animation, secondaryAnimation) {
+  //       return Center(
+  //         child: Material(
+  //           color: Colors.transparent,
+  //           child: Container(
+  //             width: 320,
+  //             padding: const EdgeInsets.all(16),
+  //             decoration: BoxDecoration(
+  //               color: Colors.white, borderRadius: BorderRadius.circular(16)),
+  //             child: Column(
+  //               mainAxisSize: MainAxisSize.min,
+  //               children: [
+  //                 const Text('Report', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+  //                 const SizedBox(height: 12),
+  //                 const Text('View or download a PDF for this order.'),
+  //                 const SizedBox(height: 16),
+  //                 Row(
+  //                   children: [
+  //                     Expanded(
+  //                       child: OutlinedButton.icon(
+  //                         icon: const Icon(Icons.visibility_rounded),
+  //                         onPressed: () => Navigator.of(context).pop(_DlgAction.view),
+  //                         label: const Text('View'),
+  //                       ),
+  //                     ),
+  //                     const SizedBox(width: 12),
+  //                     Expanded(
+  //                       child: ElevatedButton.icon(
+  //                         icon: const Icon(Icons.download_rounded),
+  //                         onPressed: () => Navigator.of(context).pop(_DlgAction.download),
+  //                         label: const Text('Download'),
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //     transitionBuilder: (context, animation, secondaryAnimation, child) {
+  //       final curved = CurvedAnimation(
+  //         parent: animation,
+  //         curve: Curves.easeOutCubic,
+  //         reverseCurve: Curves.easeInCubic,
+  //       );
+  //       return FadeTransition(
+  //         opacity: curved,
+  //         child: SlideTransition(
+  //           position: Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero).animate(curved),
+  //           child: child,
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {

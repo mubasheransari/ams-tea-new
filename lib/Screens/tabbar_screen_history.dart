@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:new_amst_flutter/Screens/report_history_screen.dart';
 import 'attendance_history_screen.dart';
 
-import 'package:flutter/material.dart';
-import 'package:new_amst_flutter/Screens/report_history_screen.dart';
-import 'attendance_history_screen.dart';
-
 const _kBg = Color(0xFFF6F7FA);
 
 class HistoryTabsScreen extends StatelessWidget {
