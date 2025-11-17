@@ -372,7 +372,7 @@ class _LocalTeaCatalogSkuOnlyState extends State<LocalTeaCatalogSkuOnly> {
                         await _store.clear();
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Order saved locally ✅')),
+                            const SnackBar(content: Text('Order was successfully recorded in sales. ✅')),
                           );
                         }
                       } else {

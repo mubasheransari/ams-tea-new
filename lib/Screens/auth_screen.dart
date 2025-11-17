@@ -811,7 +811,7 @@ class _AuthScreenState extends State<AuthScreen> {
           // logo (unchanged)
           Positioned(
             top: logoTop,
-            left: 57,
+            left: 60,
             right: 0,
             child: IgnorePointer(
               child: Center(

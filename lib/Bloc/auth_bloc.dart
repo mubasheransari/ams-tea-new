@@ -48,7 +48,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         attDate: attDate,
         appVersion: "2.0.2",
         add: "fyghfshfohfor",
-        deviceId:"0d6bb3238ca24544",
+        deviceId:deviceID//"0d6bb3238ca24544",
       );
 
       debugPrint("BODY ${res.body}");
