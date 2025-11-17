@@ -5,6 +5,7 @@ import 'package:new_amst_flutter/Screens/apply_leave_screen.dart';
 import 'package:new_amst_flutter/Screens/mark_attendance.dart'
     show MarkAttendanceView;
 import 'package:new_amst_flutter/Screens/products.dart';
+import 'package:new_amst_flutter/Screens/sales_overview.dart';
 import 'package:new_amst_flutter/Widgets/gradient_text.dart';
 
     String formatTitleCase(String text) {
@@ -59,11 +60,14 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 6 * s),
-                  _Header(s: s),
+                    _Header(s: s),
+                  SizedBox(height: 8 * s),
+                  const SalesChartSection(),
+                
+                  SizedBox(height: 8 * s),
                   // SizedBox(height: 16 * s),
                   // _SearchBar(s: s),
-                  SizedBox(height: 25 * s),
+                  SizedBox(height: 15 * s),
                   MarkAttendanceWidget(s: s),
                   SizedBox(height: 30 * s),
                   SalesWidget(s: s),
