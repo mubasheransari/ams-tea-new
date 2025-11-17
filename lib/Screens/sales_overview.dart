@@ -20,7 +20,7 @@ class SalesChartSection extends StatelessWidget {
         if (data.isEmpty) {
           return Card(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(10),
             ),
             color: const Color(0xFF0B1220),
             elevation: 6,
@@ -33,6 +33,7 @@ class SalesChartSection extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'ClashGrotesk',
                     color: Colors.white70,
+                    fontWeight: FontWeight.w600
                   ),
                 ),
               ),
@@ -91,7 +92,7 @@ class SalesChartSection extends StatelessWidget {
 
         return Card(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(10),
           ),
           color: const Color(0xFF020617), // deep slate background
           elevation: 10,
@@ -110,7 +111,8 @@ class SalesChartSection extends StatelessWidget {
             ),
             padding: const EdgeInsets.all(16),
             child: SizedBox(
-              height: 270,
+              height: 290,
+              width: MediaQuery.of(context).size.width *0.90,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -155,6 +157,7 @@ class SalesChartSection extends StatelessWidget {
                                 fontFamily: 'ClashGrotesk',
                                 fontSize: 11,
                                 color: Colors.white54,
+                                fontWeight: FontWeight.w600
                               ),
                             ),
                           ],
@@ -182,10 +185,11 @@ class SalesChartSection extends StatelessWidget {
                             const SizedBox(width: 6),
                             Text(
                               '${sortedDays.length} days',
-                              style: const TextStyle(
+                              style:  TextStyle(
                                 fontFamily: 'ClashGrotesk',
                                 fontSize: 11,
-                                color: Colors.white70,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700
                               ),
                             ),
                           ],
@@ -347,7 +351,8 @@ class SalesChartSection extends StatelessWidget {
                                     style: const TextStyle(
                                       fontSize: 10,
                                       fontFamily: 'ClashGrotesk',
-                                      color: Colors.white60,
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w600
                                     ),
                                   ),
                                 );
@@ -392,14 +397,15 @@ class SalesChartSection extends StatelessWidget {
                       Row(
                         children: [
                           Icon(Icons.touch_app_rounded,
-                              size: 14, color: Colors.white38),
+                              size: 14, color: Colors.white70),
                           SizedBox(width: 4),
                           Text(
                             'Tap a point to see exact qty',
                             style: TextStyle(
                               fontFamily: 'ClashGrotesk',
                               fontSize: 10,
-                              color: Colors.white38,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w600
                             ),
                           ),
                         ],
@@ -413,7 +419,8 @@ class SalesChartSection extends StatelessWidget {
                             style: TextStyle(
                               fontFamily: 'ClashGrotesk',
                               fontSize: 10,
-                              color: Colors.white54,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w600
                             ),
                           ),
                         ],
@@ -465,9 +472,14 @@ class _StatChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'ClashGrotesk',
-              fontSize: 11,
-              color: Colors.white70,
+  
+                     fontFamily: 'ClashGrotesk',
+                                fontSize: 11,
+                                color: Colors.white54,
+                                fontWeight: FontWeight.w600
+              // fontSize: 11,
+              // color: Colors.white,
+              // fontWeight: FontWeight.w600
             ),
           ),
           const SizedBox(width: 6),
