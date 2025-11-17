@@ -10,7 +10,7 @@ class SalesChartSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<OrderRecord>>(
-      stream: OrdersStorage().watchOrders(), // auto-updates when addOrder is called
+      stream: OrdersStorage().watchOrders(),
       builder: (context, snap) {
         if (!snap.hasData) {
           return const Center(child: CircularProgressIndicator());

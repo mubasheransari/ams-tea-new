@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:new_amst_flutter/Model/products_data.dart';
 import 'package:new_amst_flutter/Data/order_storage.dart';
+import 'package:new_amst_flutter/Repository/repository.dart';
 
 
 const kText = Color(0xFF1E1E1E);
@@ -638,6 +639,8 @@ class _CartScreenSkuOnlyState extends State<_CartScreenSkuOnly> {
   int get _total => widget.cartSku.values.fold(0, (a, b) => a + b);
 
   Future<void> _save() async {
+
+    Repository().createBaSale(skuPrice: '10', skuQty: '10', brandName: 'Ultra rich', baCode: '001', createdBy: 'xyz',skuid: '1');
     if (!mounted) return;
     setState(() => _saving = true);
     try {
