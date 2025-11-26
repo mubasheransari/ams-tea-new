@@ -23,9 +23,9 @@ class Repository {
     "http://192.168.1.72/ords/tea/ba_sales/create/";
 
 
-
-      Future<http.Response> createBaSale({
-          required String skuid, 
+Future<http.Response> createBaSale({
+  required String skuId,
+  required String skuName,
   required String skuPrice,  // e.g. "500"
   required String skuQty,    // e.g. "10"
   required String brandName, // e.g. "Mezan"
@@ -36,12 +36,12 @@ class Repository {
     final uri = Uri.parse(baSalesCreateUrl);
     debugPrint('➡️ [ba_sales/create] POST $uri');
 
-    // Use MultipartRequest to mimic Postman "form-data" (text only).
     final req = http.MultipartRequest('POST', uri)
-      ..headers.addAll(_acceptOnlyHeaders) // only "Accept: application/json"
-       ..fields['sku_id']  = skuid
-      ..fields['sku_price']  = skuPrice
-      ..fields['sku_qty']    = skuQty
+      ..headers.addAll(_acceptOnlyHeaders) // must NOT contain Content-Type
+      ..fields['sku_id']    = skuId
+      ..fields['sku_name']  = skuName
+      ..fields['sku_price'] = skuPrice
+      ..fields['sku_qty']   = skuQty
       ..fields['brand_name'] = brandName
       ..fields['ba_code']    = baCode
       ..fields['created_by'] = createdBy;
@@ -52,6 +52,7 @@ class Repository {
     debugPrint('⬅️ [ba_sales/create] ${res.statusCode}: ${res.body}');
     return res;
   } on TimeoutException {
+    debugPrint('TimeoutException');
     return http.Response(
       jsonEncode({
         "isSuccess": false,
@@ -67,6 +68,51 @@ class Repository {
     );
   }
 }
+
+//       Future<http.Response> createBaSale({
+//           required String skuid, 
+//   required String skuPrice,  // e.g. "500"
+//   required String skuQty,    // e.g. "10"
+//   required String brandName, // e.g. "Mezan"
+//   required String baCode,    // e.g. "001"
+//   required String createdBy, // e.g. "XYZ"
+// }) async {
+//   try {
+//     final uri = Uri.parse(baSalesCreateUrl);
+//     debugPrint('➡️ [ba_sales/create] POST $uri');
+
+//     // Use MultipartRequest to mimic Postman "form-data" (text only).
+//     final req = http.MultipartRequest('POST', uri)
+//       ..headers.addAll(_acceptOnlyHeaders) // only "Accept: application/json"
+//        ..fields['sku_id']  = skuid
+//       ..fields['sku_price']  = skuPrice
+//       ..fields['sku_qty']    = skuQty
+//       ..fields['brand_name'] = brandName
+//       ..fields['ba_code']    = baCode
+//       ..fields['created_by'] = createdBy;
+
+//     final streamed = await req.send().timeout(const Duration(seconds: 30));
+//     final res = await http.Response.fromStream(streamed);
+
+//     debugPrint('⬅️ [ba_sales/create] ${res.statusCode}: ${res.body}');
+//     return res;
+//   } on TimeoutException {
+//         debugPrint('TimeoutException');
+//     return http.Response(
+//       jsonEncode({
+//         "isSuccess": false,
+//         "message": "Request timed out. Please try again.",
+//       }),
+//       408,
+//     );
+//   } catch (e, st) {
+//     debugPrint('createBaSale error: $e\n$st');
+//     return http.Response(
+//       jsonEncode({"isSuccess": false, "message": "Unexpected error: $e"}),
+//       520,
+//     );
+//   }
+// }
 
 
   Future<http.Response> registerUser({

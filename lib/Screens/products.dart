@@ -194,6 +194,7 @@ class _LocalTeaCatalogSkuOnlyState extends State<LocalTeaCatalogSkuOnly> {
 
   @override
   Widget build(BuildContext context) {
+     final api = Repository(); // <-- use your repo class name
     final brands = <String>[
       "All",
       ...{for (final i in _all) i.brand}.where((s) => s.isNotEmpty),
@@ -236,7 +237,25 @@ class _LocalTeaCatalogSkuOnlyState extends State<LocalTeaCatalogSkuOnly> {
                   child: _PrimaryGradButton(
                     text: 'VIEW LIST ($totalSku)',
                     onPressed: () async {
-                      final res =
+
+ debugPrint('🔘 Button tapped');
+
+            try {
+              final res = await api.createBaSale(
+                skuId: '1',
+                skuName: 'Tea Sample5',
+                skuPrice: '500',
+                skuQty: '10',
+                brandName: 'Mezan',
+                baCode: '001',
+                createdBy: 'XYZ',
+              );
+
+              debugPrint('✅ createBaSale done: ${res.statusCode}');
+              debugPrint('Body: ${res.body}');
+            } catch (e, st) {
+              debugPrint('❌ Exception in caller: $e\n$st');
+            }                      final res =
                           await Navigator.of(context).push<Map<String, dynamic>>(
                         MaterialPageRoute(
                           builder: (_) => _CartScreenSkuOnly(
@@ -639,8 +658,37 @@ class _CartScreenSkuOnlyState extends State<_CartScreenSkuOnly> {
   int get _total => widget.cartSku.values.fold(0, (a, b) => a + b);
 
   Future<void> _save() async {
+    var api = Repository();
 
-    Repository().createBaSale(skuPrice: '10', skuQty: '10', brandName: 'Ultra rich', baCode: '001', createdBy: 'xyz',skuid: '1');
+     try {
+      final res = await api.createBaSale(
+        skuId: '1',
+        skuName: 'Tea Sample5',
+        skuPrice: '500',
+        skuQty: '10',
+        brandName: 'Mezan',
+        baCode: '001',
+        createdBy: 'XYZ',
+      );
+
+      if (!context.mounted) return;
+
+      if (res.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('BA sale saved successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: ${res.statusCode}')),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+
     if (!mounted) return;
     setState(() => _saving = true);
     try {
