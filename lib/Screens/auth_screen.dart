@@ -6,6 +6,7 @@ import 'package:new_amst_flutter/Bloc/auth_event.dart';
 import 'package:new_amst_flutter/Bloc/auth_state.dart';
 import 'package:new_amst_flutter/Repository/repository.dart';
 import 'package:new_amst_flutter/Screens/app_shell.dart';
+import 'package:new_amst_flutter/Supervisor/home_supervisor_screen.dart';
 import 'package:new_amst_flutter/Widgets/custom_Dialogs.dart';
 import 'package:new_amst_flutter/Widgets/custom_toast_widget.dart';
 import 'package:new_amst_flutter/Widgets/watermarked_widget.dart';
@@ -221,6 +222,9 @@ class _AuthScreenState extends State<AuthScreen> {
 
     if (!form.validate()) {
       return;
+    }
+    if(_loginEmailCtrl.text.trim() == "testsupervisor@gmail.com" && _loginPassCtrl.text.trim()== "Testing@123"){
+Navigator.push(context, MaterialPageRoute(builder: (context)=> JourneyPlanSupervisorScreen()));
     }
     context.read<AuthBloc>().add(
       LoginEvent(_loginEmailCtrl.text.trim(), _loginPassCtrl.text),

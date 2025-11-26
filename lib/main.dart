@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
-import 'package:new_amst_flutter/Bloc/auth_event.dart';
 import 'package:new_amst_flutter/Data/local_sessions.dart';
 import 'package:new_amst_flutter/Repository/repository.dart';
-import 'package:new_amst_flutter/Screens/app_shell.dart';
-import 'package:new_amst_flutter/Screens/splash_screen.dart';
 import 'package:new_amst_flutter/Supervisor/home_supervisor_screen.dart';
 
 
@@ -44,7 +41,7 @@ class MyApp extends StatelessWidget {
         colorSchemeSeed: Colors.deepPurple,
       ),
       // ❌ remove builder here, providers are already above MyApp
-      home:JourneyPlanSupervisorScreen()// hasSession ? const AppShell() : const SplashScreen(),
+      home: JourneyPlanSupervisorScreen()// hasSession ? const AppShell() : const SplashScreen(),
     );
   }
 }
