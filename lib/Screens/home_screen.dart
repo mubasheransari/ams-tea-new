@@ -460,7 +460,7 @@ class _ChipButtonGradient extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Image.asset(
-            icon, //'assets/sales_button_icon.png',
+            icon,
             height: 22 * s,
             width: 22 * s,
           ),

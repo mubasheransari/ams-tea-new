@@ -7,6 +7,7 @@ import 'package:new_amst_flutter/Data/local_sessions.dart';
 import 'package:new_amst_flutter/Repository/repository.dart';
 import 'package:new_amst_flutter/Screens/app_shell.dart';
 import 'package:new_amst_flutter/Screens/splash_screen.dart';
+import 'package:new_amst_flutter/Supervisor/home_supervisor_screen.dart';
 
 
 
@@ -43,7 +44,7 @@ class MyApp extends StatelessWidget {
         colorSchemeSeed: Colors.deepPurple,
       ),
       // ❌ remove builder here, providers are already above MyApp
-      home: hasSession ? const AppShell() : const SplashScreen(),
+      home:JourneyPlanSupervisorScreen()// hasSession ? const AppShell() : const SplashScreen(),
     );
   }
 }
