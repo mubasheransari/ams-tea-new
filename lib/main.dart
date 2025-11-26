@@ -40,8 +40,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorSchemeSeed: Colors.deepPurple,
       ),
-      // ❌ remove builder here, providers are already above MyApp
-      home: JourneyPlanSupervisorScreen()// hasSession ? const AppShell() : const SplashScreen(),
+      home: JourneyPlanMapScreen()// hasSession ? const AppShell() : const SplashScreen(),
     );
   }
 }

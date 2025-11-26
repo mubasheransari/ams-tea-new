@@ -1,7 +1,9 @@
+// lib/models/journey_plan_supervisor.dart
+
 class JourneyPlanSupervisor {
-  String name;
-  String lat;
-  String lng;
+  final String name;
+  final double lat;
+  final double lng;
   bool isVisited;
 
   JourneyPlanSupervisor({
@@ -12,31 +14,31 @@ class JourneyPlanSupervisor {
   });
 }
 
-// Hard-coded journey plan for now
+// Sample journey plan outlets (Imtiaz / Naheed etc.)
 final List<JourneyPlanSupervisor> kJourneyPlan = [
   JourneyPlanSupervisor(
-    name: 'Imtiaz – Karachi',
-    lat: '24.8829',
-    lng: '67.0660',
+    name: 'Imtiaz Super Store – Karachi',
+    lat: 24.8829,
+    lng: 67.0660,
   ),
   JourneyPlanSupervisor(
-    name: 'Imtiaz – Defence',
-    lat: '24.8129',
-    lng: '67.0648',
+    name: 'Imtiaz Super Store – Defence',
+    lat: 24.8129,
+    lng: 67.0648,
   ),
   JourneyPlanSupervisor(
     name: 'Naheed – Bahadurabad',
-    lat: '24.8822',
-    lng: '67.0729',
+    lat: 24.8822,
+    lng: 67.0729,
   ),
   JourneyPlanSupervisor(
-    name: 'Imtiaz  – Gulshan',
-    lat: '24.9180',
-    lng: '67.0971',
+    name: 'Imtiaz Super Store – Gulshan',
+    lat: 24.9180,
+    lng: 67.0971,
   ),
   JourneyPlanSupervisor(
-    name: 'Imtiaz – Defence 2',
-    lat: '24.8075',
-    lng: '67.0675',
+    name: 'Imtiaz Super Store – Defence 2',
+    lat: 24.8075,
+    lng: 67.0675,
   ),
 ];

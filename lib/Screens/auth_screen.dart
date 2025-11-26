@@ -224,7 +224,7 @@ class _AuthScreenState extends State<AuthScreen> {
       return;
     }
     if(_loginEmailCtrl.text.trim() == "testsupervisor@gmail.com" && _loginPassCtrl.text.trim()== "Testing@123"){
-Navigator.push(context, MaterialPageRoute(builder: (context)=> JourneyPlanSupervisorScreen()));
+Navigator.push(context, MaterialPageRoute(builder: (context)=> JourneyPlanMapScreen()));
     }
     context.read<AuthBloc>().add(
       LoginEvent(_loginEmailCtrl.text.trim(), _loginPassCtrl.text),
