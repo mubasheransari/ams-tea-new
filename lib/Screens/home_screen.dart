@@ -8,17 +8,14 @@ import 'package:new_amst_flutter/Screens/products.dart';
 import 'package:new_amst_flutter/Screens/sales_overview.dart';
 import 'package:new_amst_flutter/Widgets/gradient_text.dart';
 
-    String formatTitleCase(String text) {
-    if (text.isEmpty) return text;
-    return text
-        .toLowerCase()
-        .split(' ')
-        .map(
-          (w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '',
-        )
-        .join(' ');
-  }
-
+String formatTitleCase(String text) {
+  if (text.isEmpty) return text;
+  return text
+      .toLowerCase()
+      .split(' ')
+      .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+      .join(' ');
+}
 
 const kBg = Color(0xFFF6F7FA);
 const kTxtDim = Color(0xFF6A6F7B);
@@ -60,19 +57,18 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                    _Header(s: s),
+                  _Header(s: s),
                   SizedBox(height: 8 * s),
                   const SalesChartSection(),
-                
+
                   SizedBox(height: 8 * s),
-                  // SizedBox(height: 16 * s),
-                  // _SearchBar(s: s),
+
                   SizedBox(height: 15 * s),
                   MarkAttendanceWidget(s: s),
                   SizedBox(height: 30 * s),
                   SalesWidget(s: s),
-                       SizedBox(height: 25 * s),
-                  ApplyLeaveWidget(s: s)
+                  SizedBox(height: 25 * s),
+                  ApplyLeaveWidget(s: s),
                 ],
               ),
             ),
@@ -83,14 +79,12 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-
 class _Header extends StatelessWidget {
   const _Header({required this.s});
   final double s;
 
   @override
   Widget build(BuildContext context) {
-    // Rebuild when loginModel changes:
     final loginModel = context.select((AuthBloc b) => b.state.loginModel);
     final rawName = loginModel?.userinfo?.empnam ?? 'User';
     final name = formatTitleCase(rawName);
@@ -140,139 +134,7 @@ class _Header extends StatelessWidget {
             ),
           ),
         ),
-        // SizedBox(width: 10 * s),
-        // Container(
-        //   padding: EdgeInsets.all(2 * s),
-        //   decoration: BoxDecoration(
-        //     color: Colors.white,
-        //     shape: BoxShape.circle,
-        //     boxShadow: [
-        //       BoxShadow(
-        //         color: Colors.black.withOpacity(0.06),
-        //         blurRadius: 8 * s,
-        //         offset: Offset(0, 4 * s),
-        //       ),
-        //     ],
-        //   ),
-        //   child: CircleAvatar(
-        //     radius: 30 * s,
-        //     backgroundImage: const AssetImage('assets/avatar.png'),
-        //   ),
-        // ),
       ],
-    );
-  }
-}
-
-
-// class _Header extends StatelessWidget {
-//   const _Header({required this.s});
-//   final double s;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Row(
-//       children: [
-//         Expanded(
-//           child: RichText(
-//             text: TextSpan(
-//               style: TextStyle(
-//                 fontFamily: 'ClashGrotesk',
-//                 fontSize: 14 * s,
-//                 color: Color(0xFF6A6F7B),
-//                 height: 1.2,
-//               ),
-//               children: [
-//                 TextSpan(
-//                   text: 'Good morning,\n',
-//                   style: TextStyle(
-//                     fontFamily: 'ClashGrotesk',
-//                     fontSize: 18 * s,
-//                     fontWeight: FontWeight.w700,
-//                     height: 1.2,
-//                     letterSpacing: 0.1 * s,
-//                   ),
-//                 ),
-//                 WidgetSpan(
-//                   alignment: PlaceholderAlignment.baseline,
-//                   baseline: TextBaseline.alphabetic,
-//                   child: GradientText(
-//                     formatTitleCase(context.read<AuthBloc>().state.loginModel!.userinfo!.empnam.toString()),
-//                  // context.read<AuthBloc>().state.loginModel!.userinfo. // "Test User",
-//                     gradient: const LinearGradient(
-//                       colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
-//                       begin: Alignment.centerLeft,
-//                       end: Alignment.centerRight,
-//                     ),
-//                     style: TextStyle(
-//                       fontFamily: 'ClashGrotesk',
-//                       fontSize: 25 * s,
-//                       fontWeight: FontWeight.w900,
-//                       height: 1.2,
-//                       letterSpacing: 0.1 * s,
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ),
-//         SizedBox(width: 10 * s),
-//         Container(
-//           padding: EdgeInsets.all(2 * s),
-//           decoration: BoxDecoration(
-//             color: Colors.white,
-//             shape: BoxShape.circle,
-//             boxShadow: [ 
-//               BoxShadow(
-//                 color: Colors.black.withOpacity(0.06),
-//                 blurRadius: 8 * s,
-//                 offset: Offset(0, 4 * s),
-//               ),
-//             ],
-//           ),
-//           child: CircleAvatar(
-//             radius: 30 * s,
-//             backgroundImage: const AssetImage('assets/avatar.png'),
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }
-
-class _SearchBar extends StatelessWidget {
-  const _SearchBar({required this.s});
-  final double s;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 44 * s,
-      decoration: BoxDecoration(
-        color: Color(0xFFF0F2F5),
-        borderRadius: BorderRadius.circular(14 * s),
-      ),
-      padding: EdgeInsets.symmetric(horizontal: 12 * s),
-      child: Row(
-        children: [
-          Icon(Icons.search_rounded, size: 22 * s, color: Color(0xFF9CA3AF)),
-          SizedBox(width: 8 * s),
-          Expanded(
-            child: Text(
-              'Search',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: 'ClashGrotesk',
-                fontSize: 14 * s,
-                color: Color(0xFF9CA3AF),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -347,24 +209,23 @@ class MarkAttendanceWidget extends StatelessWidget {
                   onTap: () {
                     final authBloc = context.read<AuthBloc>();
 
-Navigator.of(context, rootNavigator: true).push(
-  MaterialPageRoute(
-    fullscreenDialog: true,
-    builder: (_) => BlocProvider<AuthBloc>.value(
-      value: authBloc,
-      child:  MarkAttendanceView(code: context.read<AuthBloc>().state.loginModel!.userinfo!.code.toString(),),
-    ),
-  ),
-);
-
-
-                    
-                    // Navigator.of(context, rootNavigator: true).push(
-                    //   MaterialPageRoute(
-                    //     builder: (_) => const MarkAttendanceView(),
-                    //     fullscreenDialog: true,
-                    //   ),
-                    // );
+                    Navigator.of(context, rootNavigator: true).push(
+                      MaterialPageRoute(
+                        fullscreenDialog: true,
+                        builder: (_) => BlocProvider<AuthBloc>.value(
+                          value: authBloc,
+                          child: MarkAttendanceView(
+                            code: context
+                                .read<AuthBloc>()
+                                .state
+                                .loginModel!
+                                .userinfo!
+                                .code
+                                .toString(),
+                          ),
+                        ),
+                      ),
+                    );
                   },
                   child: _ChipButtonGradient(
                     s: s,
@@ -392,7 +253,7 @@ class ApplyLeaveWidget extends StatelessWidget {
       width: MediaQuery.of(context).size.width * 0.90,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)], 
+          colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -415,12 +276,12 @@ class ApplyLeaveWidget extends StatelessWidget {
               width: 225 * s,
               height: 215 * s,
               child: Image.asset(
-                 'assets/leave_apply_card.png',
+                'assets/leave_apply_card.png',
                 fit: BoxFit.contain,
               ),
             ),
           ),
-      
+
           Padding(
             padding: EdgeInsets.all(16 * s),
             child: Column(
@@ -450,13 +311,12 @@ class ApplyLeaveWidget extends StatelessWidget {
                 SizedBox(height: 34 * s),
                 InkWell(
                   onTap: () {
-                                     Navigator.of(context, rootNavigator: true).push(
+                    Navigator.of(context, rootNavigator: true).push(
                       MaterialPageRoute(
                         builder: (_) => const ApplyLeaveScreenNew(),
                         fullscreenDialog: true,
                       ),
                     );
-
                   },
                   child: _ChipButtonGradient(
                     s: s,
@@ -482,9 +342,9 @@ class SalesWidget extends StatelessWidget {
     return Container(
       height: 219 * s,
       width: MediaQuery.of(context).size.width * 0.90,
-           decoration: BoxDecoration(
+      decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)], 
+          colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -497,17 +357,7 @@ class SalesWidget extends StatelessWidget {
           ),
         ],
       ),
-      // decoration: BoxDecoration(
-      //   color: Colors.white,
-      //   borderRadius: BorderRadius.circular(9 * s),
-      //   boxShadow: [
-      //     BoxShadow(
-      //       color: Colors.black.withOpacity(0.06),
-      //       blurRadius: 18 * s,
-      //       offset: Offset(0, 10 * s),
-      //     ),
-      //   ],
-      // ),
+
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
@@ -555,10 +405,20 @@ class SalesWidget extends StatelessWidget {
                 ),
                 const Spacer(),
                 InkWell(
-                  onTap: (){
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=> LocalTeaCatalogSkuOnly()));
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LocalTeaCatalogSkuOnly(),
+                      ),
+                    );
                   },
-                  child: _ChipButtonGradient(s: s, label: 'Enter your Sales', icon: 'assets/sales_button_icon.png',)),
+                  child: _ChipButtonGradient(
+                    s: s,
+                    label: 'Enter your Sales',
+                    icon: 'assets/sales_button_icon.png',
+                  ),
+                ),
               ],
             ),
           ),
@@ -568,55 +428,13 @@ class SalesWidget extends StatelessWidget {
   }
 }
 
-class _ChipButtonWhite extends StatelessWidget {
-  const _ChipButtonWhite({
+class _ChipButtonGradient extends StatelessWidget {
+  const _ChipButtonGradient({
     required this.s,
-    required this.icon,
     required this.label,
+    required this.icon,
   });
   final double s;
-  final String icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 40 * s,
-      padding: EdgeInsets.symmetric(horizontal: 12 * s),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(5 * s),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.10),
-            blurRadius: 12 * s,
-            offset: Offset(0, 6 * s),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(icon, height: 22 * s, width: 22 * s),
-          SizedBox(width: 8 * s),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'ClashGrotesk',
-              color: Color(0xFF1F2937),
-              fontSize: 16 * s,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ChipButtonGradient extends StatelessWidget {
-  const _ChipButtonGradient({required this.s, required this.label,required this.icon});
-    final double s;
   final String icon;
   final String label;
 
@@ -642,7 +460,7 @@ class _ChipButtonGradient extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Image.asset(
-            icon,//'assets/sales_button_icon.png',
+            icon, //'assets/sales_button_icon.png',
             height: 22 * s,
             width: 22 * s,
           ),
@@ -662,5 +480,3 @@ class _ChipButtonGradient extends StatelessWidget {
     );
   }
 }
-
-
