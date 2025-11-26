@@ -100,9 +100,15 @@ class _AuthScreenState extends State<AuthScreen> {
 
   final _repo = Repository();
 
+  static const _hardcodedEmail = 'test1@gmail.com';
+static const _hardcodedPassword = '123';
+
   @override
   void initState() {
     super.initState();
+
+    _loginEmailCtrl.text = _hardcodedEmail;
+  _loginPassCtrl.text = _hardcodedPassword;
     _scrollCtrl.addListener(() {
       if (!_scrollCtrl.hasClients) return;
       if (tab != 1) return;
@@ -212,24 +218,53 @@ class _AuthScreenState extends State<AuthScreen> {
     final ok = RegExp(r'^(03\d{9}|92\d{10})$').hasMatch(s);
     return ok ? null : 'Use 03XXXXXXXXX or 92XXXXXXXXXX';
   }
+Future<void> _submitLogin() async {
+  final form = _loginFormKey.currentState;
+  if (form == null) return;
 
+  FocusScope.of(context).unfocus();
 
-  Future<void> _submitLogin() async {
-    final form = _loginFormKey.currentState;
-    if (form == null) return;
-
-    FocusScope.of(context).unfocus(); 
-
-    if (!form.validate()) {
-      return;
-    }
-    if(_loginEmailCtrl.text.trim() == "testsupervisor@gmail.com" && _loginPassCtrl.text.trim()== "Testing@123"){
-Navigator.push(context, MaterialPageRoute(builder: (context)=> JourneyPlanMapScreen()));
-    }
-    context.read<AuthBloc>().add(
-      LoginEvent(_loginEmailCtrl.text.trim(), _loginPassCtrl.text),
-    );
+  // Validate form first (if you want validation even for hardcoded)
+  if (!form.validate()) {
+    return;
   }
+
+  final email = _loginEmailCtrl.text.trim();
+  final password = _loginPassCtrl.text.trim();
+
+  // ✅ Hardcoded supervisor login
+  if (email == _hardcodedEmail && password == _hardcodedPassword) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const JourneyPlanMapScreen(),
+      ),
+    );
+    return; // ⬅️ important: don’t call API after this
+  }
+
+  // ✅ Normal login (API / Bloc)
+  context.read<AuthBloc>().add(
+        LoginEvent(email, password),
+      );
+}
+
+//   Future<void> _submitLogin() async {
+//     final form = _loginFormKey.currentState;
+//     if (form == null) return;
+
+//     FocusScope.of(context).unfocus(); 
+
+//     if (!form.validate()) {
+//       return;
+//     }
+//     if(_loginEmailCtrl.text.trim() == "testsupervisor@gmail.com" && _loginPassCtrl.text.trim()== "Testing@123"){
+// Navigator.push(context, MaterialPageRoute(builder: (context)=> JourneyPlanMapScreen()));
+//     }
+//     context.read<AuthBloc>().add(
+//       LoginEvent(_loginEmailCtrl.text.trim(), _loginPassCtrl.text),
+//     );
+//   }
 
   Future<void> _submitSignup() async {
     final form = _signupFormKey.currentState;

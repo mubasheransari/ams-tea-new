@@ -236,24 +236,25 @@ class _LocalTeaCatalogSkuOnlyState extends State<LocalTeaCatalogSkuOnly> {
                     text: 'VIEW LIST ($totalSku)',
                     onPressed: () async {
 
- debugPrint('🔘 Button tapped');
+//  debugPrint('🔘 Button tapped');
 
-            try {
-              final res = await api.createBaSale(
-                skuId: '1',
-                skuName: 'Tea Sample5',
-                skuPrice: '500',
-                skuQty: '10',
-                brandName: 'Mezan',
-                baCode: '001',
-                createdBy: 'XYZ',
-              );
+//             try {
+//               final res = await api.createBaSale(
+//                 skuId: '1',
+//                 skuName: 'Tea Sample5',
+//                 skuPrice: '500',
+//                 skuQty: '10',
+//                 brandName: 'Mezan',
+//                 baCode: '001',
+//                 createdBy: 'XYZ',
+//               );
 
-              debugPrint('✅ createBaSale done: ${res.statusCode}');
-              debugPrint('Body: ${res.body}');
-            } catch (e, st) {
-              debugPrint('❌ Exception in caller: $e\n$st');
-            }                      final res =
+//               debugPrint('✅ createBaSale done: ${res.statusCode}');
+//               debugPrint('Body: ${res.body}');
+//             } catch (e, st) {
+//               debugPrint('❌ Exception in caller: $e\n$st');
+//             }                     
+ final res =
                           await Navigator.of(context).push<Map<String, dynamic>>(
                         MaterialPageRoute(
                           builder: (_) => _CartScreenSkuOnly(
@@ -656,36 +657,36 @@ class _CartScreenSkuOnlyState extends State<_CartScreenSkuOnly> {
   int get _total => widget.cartSku.values.fold(0, (a, b) => a + b);
 
   Future<void> _save() async {
-    var api = Repository();
+    // var api = Repository();
 
-     try {
-      final res = await api.createBaSale(
-        skuId: '1',
-        skuName: 'Tea Sample5',
-        skuPrice: '500',
-        skuQty: '10',
-        brandName: 'Mezan',
-        baCode: '001',
-        createdBy: 'XYZ',
-      );
+    //  try {
+    //   final res = await api.createBaSale(
+    //     skuId: '1',
+    //     skuName: 'Tea Sample5',
+    //     skuPrice: '500',
+    //     skuQty: '10',
+    //     brandName: 'Mezan',
+    //     baCode: '001',
+    //     createdBy: 'XYZ',
+    //   );
 
-      if (!context.mounted) return;
+    //   if (!context.mounted) return;
 
-      if (res.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('BA sale saved successfully')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: ${res.statusCode}')),
-        );
-      }
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    }
+    //   if (res.statusCode == 200) {
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       const SnackBar(content: Text('BA sale saved successfully')),
+    //     );
+    //   } else {
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       SnackBar(content: Text('Failed: ${res.statusCode}')),
+    //     );
+    //   }
+    // } catch (e) {
+    //   if (!context.mounted) return;
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(content: Text('Error: $e')),
+    //   );
+    // }
 
     if (!mounted) return;
     setState(() => _saving = true);
