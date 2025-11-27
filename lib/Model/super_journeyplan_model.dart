@@ -14,8 +14,12 @@ class JourneyPlanSupervisor {
   });
 }
 
-// Sample journey plan outlets (Imtiaz / Naheed etc.)
 final List<JourneyPlanSupervisor> kJourneyPlan = [
+    JourneyPlanSupervisor(
+    name: 'Paracha Textile Mill (Ghee Unit)',
+    lat:24.887257,
+    lng: 66.9772325,
+  ),
   JourneyPlanSupervisor(
     name: 'Imtiaz Super Store – Karachi',
     lat: 24.8829,
@@ -41,4 +45,5 @@ final List<JourneyPlanSupervisor> kJourneyPlan = [
     lat: 24.8075,
     lng: 67.0675,
   ),
+ 
 ];

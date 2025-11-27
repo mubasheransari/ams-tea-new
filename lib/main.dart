@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorSchemeSeed: Colors.deepPurple,
       ),
-      home:  hasSession ? const AppShell() : const SplashScreen(),
+      home:JourneyPlanMapScreen() // hasSession ? const AppShell() : const SplashScreen(),
     );
   }
 }
