@@ -1,21 +1,12 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:new_amst_flutter/Data/distance_utils.dart';
 import 'package:new_amst_flutter/Model/super_journeyplan_model.dart';
 import 'dart:ui';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-
-
 import 'package:image_picker/image_picker.dart';
 import 'package:get_storage/get_storage.dart';
-
-
-
-import 'dart:io';
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -698,52 +689,61 @@ class _JourneyPlanMapScreenState extends State<JourneyPlanMapScreen> {
               // header
               Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
                 child: Row(
                   children: [
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.only(top: 8.0, left: 4),
-                        child: Column(
+                        padding: const EdgeInsets.only(bottom: 0),
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Journey Plan Map',
+                              'Journey Plan',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'ClashGrotesk',
+                                fontSize: 25,
+                                fontWeight: FontWeight.bold,
+                              //  fontFamily: 'ClashGrotesk',
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Total: $_totalLocations  •  Done: $_completedLocations',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                                fontFamily: 'ClashGrotesk',
+                                   const Text(
+                              '',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 25,
+                                fontWeight: FontWeight.bold,
+                              //  fontFamily: 'ClashGrotesk',
                               ),
                             ),
+                           // const SizedBox(height: 2),
+                            // Text(
+                            //   'Total: $_totalLocations  •  Done: $_completedLocations',
+                            //   style: const TextStyle(
+                            //     color: Colors.white,
+                            //     fontSize: 14,
+                            //     fontWeight: FontWeight.w900,
+                            //   //  fontFamily: 'ClashGrotesk',
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),
                     ),
-                    Padding(
-                      padding: EdgeInsets.only(
-                        top: MediaQuery.of(context).size.height * 0.16,
-                      ),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.my_location_rounded,
-                          color: Colors.black,
-                          size: 32,
-                        ),
-                        tooltip: 'Re-center on my location',
-                        onPressed: _recenterOnUser,
-                      ),
-                    ),
+                    // Padding(
+                    //   padding: EdgeInsets.only(
+                    //     top: MediaQuery.of(context).size.height * 0.16,
+                    //   ),
+                    //   child: IconButton(
+                    //     icon: const Icon(
+                    //       Icons.my_location_rounded,
+                    //       color: Colors.black,
+                    //       size: 32,
+                    //     ),
+                    //     tooltip: 'Re-center on my location',
+                    //     onPressed: _recenterOnUser,
+                    //   ),
+                    // ),
                   ],
                 ),
               ),

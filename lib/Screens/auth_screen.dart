@@ -100,8 +100,8 @@ class _AuthScreenState extends State<AuthScreen> {
 
   final _repo = Repository();
 
-  static const _hardcodedEmail = 'test1@gmail.com';
-static const _hardcodedPassword = '123';
+  static const _hardcodedEmail = '';
+static const _hardcodedPassword = '';
 
   @override
   void initState() {
@@ -233,7 +233,7 @@ Future<void> _submitLogin() async {
   final password = _loginPassCtrl.text.trim();
 
   // ✅ Hardcoded supervisor login
-  if (email == _hardcodedEmail && password == _hardcodedPassword) {
+  if (email == "supervisor@gmail.com" && password == "123") {
     Navigator.push(
       context,
       MaterialPageRoute(
