@@ -16,6 +16,8 @@ import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
 import 'dart:convert';
 import 'dart:math';
 
+    final box = GetStorage();
+
 // void showToast(BuildContext context, String message, {bool success = true}) {
 //   final mq = MediaQuery.of(context);
 //   final keyboard = mq.viewInsets.bottom;
@@ -121,7 +123,7 @@ static const _hardcodedPassword = '';
   }
 
   Future<void> _initDeviceId() async {
-    final box = GetStorage();
+
     final existing = box.read<String>('device_id');
 
     if (existing != null && existing.isNotEmpty) {
@@ -234,6 +236,8 @@ Future<void> _submitLogin() async {
 
   // ✅ Hardcoded supervisor login
   if (email == "supervisor@gmail.com" && password == "123") {
+         box.write("supervisor_loggedIn",1);
+  
     Navigator.push(
       context,
       MaterialPageRoute(
