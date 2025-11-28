@@ -14,6 +14,15 @@ import 'package:image_picker/image_picker.dart';
 import 'package:get_storage/get_storage.dart';
 
 
+// import 'dart:io';
+// import 'dart:math' as math;
+// import 'dart:ui';
+
+// import 'package:flutter/material.dart';
+// import 'package:get_storage/get_storage.dart';
+// import 'package:google_maps_flutter/google_maps_flutter.dart';
+// import 'package:geolocator/geolocator.dart';
+// import 'package:image_picker/image_picker.dart';
 
 const kText = Color(0xFF1E1E1E);
 const kMuted = Color(0xFF707883);
@@ -30,10 +39,12 @@ const double kVisitRadiusMeters = 13000;
 
 // storage keys
 const String _pendingVisitKey = 'pending_visit_v1';
+const String _pendingVisitCheckInKey = 'pending_visit_checkin_v1';
 const String _journeyDateKey = 'journey_date_v1';
 
 String _visitedKeyFor(String date) => 'visited_$date';
 String _endedKeyFor(String date) => 'journey_ended_$date';
+String _visitDetailsKeyFor(String date) => 'visit_details_$date';
 
 String _dateKey(DateTime dt) {
   final y = dt.year.toString();
@@ -101,19 +112,49 @@ class _JourneyPlanMapScreenState extends State<JourneyPlanMapScreen> {
       // new day -> reset day-related data
       _box.write(_journeyDateKey, _todayKey);
       _box.remove(_pendingVisitKey);
+      _box.remove(_pendingVisitCheckInKey);
       if (lastDate != null) {
         _box.remove(_visitedKeyFor(lastDate));
         _box.remove(_endedKeyFor(lastDate));
+        _box.remove(_visitDetailsKeyFor(lastDate));
       }
       for (final jp in _all) {
         jp.isVisited = false;
+        jp.checkIn = null;
+        jp.checkOut = null;
+        jp.durationMinutes = null;
       }
     } else {
       // same day -> restore visited list
       final raw = _box.read<List>(_visitedKeyFor(_todayKey)) ?? [];
       final visitedNames = raw.cast<String>();
+
+      // restore visit details map
+      final rawDetails = _box.read(_visitDetailsKeyFor(_todayKey));
+      Map<String, dynamic> details = {};
+      if (rawDetails is Map) {
+        details = Map<String, dynamic>.from(rawDetails);
+      }
+
       for (final jp in _all) {
         jp.isVisited = visitedNames.contains(jp.name);
+
+        final entry = details[jp.name];
+        if (entry is Map) {
+          final checkInStr = entry['checkIn'] as String?;
+          final checkOutStr = entry['checkOut'] as String?;
+          final dur = entry['durationMinutes'];
+
+          jp.checkIn =
+              checkInStr != null ? DateTime.tryParse(checkInStr) : null;
+          jp.checkOut =
+              checkOutStr != null ? DateTime.tryParse(checkOutStr) : null;
+          jp.durationMinutes = (dur is int)
+              ? dur
+              : (dur is num)
+                  ? dur.toInt()
+                  : null;
+        }
       }
     }
   }
@@ -242,13 +283,26 @@ class _JourneyPlanMapScreenState extends State<JourneyPlanMapScreen> {
   /* ---------------------- Forced popup / visited flow ---------------------- */
 
   void _onToggleVisited(_JourneyWithDistance item) {
-    // if today already ended, just show info
+    // 1) if today already ended, block everything
     final journeyEnded = _box.read<bool>(_endedKeyFor(_todayKey)) ?? false;
     if (journeyEnded) {
       _maybeShowJourneyEnded();
       return;
     }
 
+    // 2) if already visited (checked out), do NOT allow another visit
+    if (item.supervisor.isVisited) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'You have already checked out from ${item.supervisor.name} today.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    // 3) require current location
     if (_currentPos == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -258,6 +312,7 @@ class _JourneyPlanMapScreenState extends State<JourneyPlanMapScreen> {
       return;
     }
 
+    // 4) distance check
     final dKm = distanceInKm(
       _currentPos!.latitude,
       _currentPos!.longitude,
@@ -279,11 +334,14 @@ class _JourneyPlanMapScreenState extends State<JourneyPlanMapScreen> {
       return;
     }
 
+    // 5) start visit flow (check-in now)
     _startVisitFlow(item.supervisor);
   }
 
   void _startVisitFlow(JourneyPlanSupervisor jp) {
+    final now = DateTime.now();
     _box.write(_pendingVisitKey, jp.name);
+    _box.write(_pendingVisitCheckInKey, now.toIso8601String()); // store check-in
     _showVisitPopup(jp);
   }
 
@@ -486,7 +544,6 @@ class _JourneyPlanMapScreenState extends State<JourneyPlanMapScreen> {
                       onPressed: canSubmit
                           ? () async {
                               setState(() => submitting = true);
-                              // TODO: send image + comment to API if needed
                               Navigator.of(ctx).pop(<String, dynamic>{
                                 'imagePath': pickedImage!.path,
                                 'comment': commentCtrl.text.trim(),
@@ -522,26 +579,69 @@ class _JourneyPlanMapScreenState extends State<JourneyPlanMapScreen> {
     );
 
     if (result != null) {
+      // compute checkout & duration
+      final checkInIso = _box.read<String>(_pendingVisitCheckInKey);
+      DateTime? checkIn;
+      if (checkInIso != null) {
+        checkIn = DateTime.tryParse(checkInIso);
+      }
+      final checkOut = DateTime.now();
+      final durationMinutes =
+          checkIn != null ? checkOut.difference(checkIn).inMinutes : 0;
+
       _box.remove(_pendingVisitKey);
-      _markVisitedPersist(jp);
+      _box.remove(_pendingVisitCheckInKey);
+
+      _markVisitedPersist(
+        jp,
+        checkIn: checkIn,
+        checkOut: checkOut,
+        durationMinutes: durationMinutes,
+      );
     }
   }
 
-  void _markVisitedPersist(JourneyPlanSupervisor jp) {
+  void _markVisitedPersist(
+    JourneyPlanSupervisor jp, {
+    DateTime? checkIn,
+    DateTime? checkOut,
+    int? durationMinutes,
+  }) {
     setState(() {
       jp.isVisited = true;
+      jp.checkIn = checkIn;
+      jp.checkOut = checkOut;
+      jp.durationMinutes = durationMinutes;
     });
 
-    final key = _visitedKeyFor(_todayKey);
-    final raw = _box.read<List>(key) ?? [];
+    // 1) mark as visited for UI
+    final visitedKey = _visitedKeyFor(_todayKey);
+    final raw = _box.read<List>(visitedKey) ?? [];
     final visited = raw.cast<String>();
     if (!visited.contains(jp.name)) {
       visited.add(jp.name);
     }
-    _box.write(key, visited);
+    _box.write(visitedKey, visited);
+
+    // 2) store visit details (check-in, check-out, duration)
+    final detailsKey = _visitDetailsKeyFor(_todayKey);
+    final rawDetails = _box.read(detailsKey);
+    Map<String, dynamic> details;
+    if (rawDetails is Map) {
+      details = Map<String, dynamic>.from(rawDetails);
+    } else {
+      details = {};
+    }
+    details[jp.name] = {
+      'checkIn': checkIn?.toIso8601String(),
+      'checkOut': checkOut?.toIso8601String(),
+      'durationMinutes': durationMinutes,
+    };
+    _box.write(detailsKey, details);
 
     _buildMarkers();
 
+    // 3) if all completed, end journey for today
     if (_completedLocations == _totalLocations) {
       _box.write(_endedKeyFor(_todayKey), true);
       _maybeShowJourneyEnded();
@@ -697,53 +797,19 @@ class _JourneyPlanMapScreenState extends State<JourneyPlanMapScreen> {
                         padding: const EdgeInsets.only(bottom: 0),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
+                          children: const [
+                            Text(
                               'Journey Plan',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 25,
                                 fontWeight: FontWeight.bold,
-                              //  fontFamily: 'ClashGrotesk',
                               ),
                             ),
-                                   const Text(
-                              '',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 25,
-                                fontWeight: FontWeight.bold,
-                              //  fontFamily: 'ClashGrotesk',
-                              ),
-                            ),
-                           // const SizedBox(height: 2),
-                            // Text(
-                            //   'Total: $_totalLocations  •  Done: $_completedLocations',
-                            //   style: const TextStyle(
-                            //     color: Colors.white,
-                            //     fontSize: 14,
-                            //     fontWeight: FontWeight.w900,
-                            //   //  fontFamily: 'ClashGrotesk',
-                            //   ),
-                            // ),
                           ],
                         ),
                       ),
                     ),
-                    // Padding(
-                    //   padding: EdgeInsets.only(
-                    //     top: MediaQuery.of(context).size.height * 0.16,
-                    //   ),
-                    //   child: IconButton(
-                    //     icon: const Icon(
-                    //       Icons.my_location_rounded,
-                    //       color: Colors.black,
-                    //       size: 32,
-                    //     ),
-                    //     tooltip: 'Re-center on my location',
-                    //     onPressed: _recenterOnUser,
-                    //   ),
-                    // ),
                   ],
                 ),
               ),
@@ -902,6 +968,19 @@ class _GlassJourneyCard extends StatelessWidget {
     final jp = data.supervisor;
     final distText = '${data.distanceKm.toStringAsFixed(1)} km';
 
+    String? timeText;
+    if (jp.checkIn != null && jp.checkOut != null) {
+      final inStr = formatTimeHM(jp.checkIn!);
+      final outStr = formatTimeHM(jp.checkOut!);
+      if (jp.durationMinutes != null) {
+        timeText = '$inStr – $outStr • ${jp.durationMinutes} min';
+      } else {
+        timeText = '$inStr – $outStr';
+      }
+    } else if (jp.checkIn != null) {
+      timeText = 'Check-in: ${formatTimeHM(jp.checkIn!)}';
+    }
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -970,6 +1049,18 @@ class _GlassJourneyCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (timeText != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      timeText,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'ClashGrotesk',
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1025,6 +1116,7 @@ class _GlassJourneyCard extends StatelessWidget {
 }
 
 
+
 // const kText = Color(0xFF1E1E1E);
 // const kMuted = Color(0xFF707883);
 // const kShadow = Color(0x14000000);
@@ -1035,10 +1127,24 @@ class _GlassJourneyCard extends StatelessWidget {
 //   end: Alignment.bottomRight,
 // );
 
-// // user must be within this radius (meters) to mark visited
+// // distance limit in meters to allow marking as visited
 // const double kVisitRadiusMeters = 13000;
-// // key to persist pending outlet
+
+// // storage keys
 // const String _pendingVisitKey = 'pending_visit_v1';
+// const String _journeyDateKey = 'journey_date_v1';
+
+// String _visitedKeyFor(String date) => 'visited_$date';
+// String _endedKeyFor(String date) => 'journey_ended_$date';
+
+// String _dateKey(DateTime dt) {
+//   final y = dt.year.toString();
+//   final m = dt.month.toString().padLeft(2, '0');
+//   final d = dt.day.toString().padLeft(2, '0');
+//   return '$y-$m-$d';
+// }
+
+// /* --------------------------- Helper Class --------------------------- */
 
 // class _JourneyWithDistance {
 //   final JourneyPlanSupervisor supervisor;
@@ -1071,6 +1177,7 @@ class _GlassJourneyCard extends StatelessWidget {
 //   final Set<Marker> _markers = {};
 
 //   final GetStorage _box = GetStorage();
+//   late String _todayKey;
 
 //   int get _totalLocations => _all.length;
 //   int get _completedLocations =>
@@ -1080,7 +1187,37 @@ class _GlassJourneyCard extends StatelessWidget {
 //   void initState() {
 //     super.initState();
 //     _all = List<JourneyPlanSupervisor>.from(kJourneyPlan);
-//     _initLocation().then((_) => _restorePendingPopup());
+//     _todayKey = _dateKey(DateTime.now());
+//     _restoreDayState();
+//     _initLocation().then((_) async {
+//       await _restorePendingPopup();
+//       _maybeShowJourneyEnded();
+//     });
+//   }
+
+//   /* --------------------------- Daily persistence --------------------------- */
+
+//   void _restoreDayState() {
+//     final lastDate = _box.read<String>(_journeyDateKey);
+//     if (lastDate != _todayKey) {
+//       // new day -> reset day-related data
+//       _box.write(_journeyDateKey, _todayKey);
+//       _box.remove(_pendingVisitKey);
+//       if (lastDate != null) {
+//         _box.remove(_visitedKeyFor(lastDate));
+//         _box.remove(_endedKeyFor(lastDate));
+//       }
+//       for (final jp in _all) {
+//         jp.isVisited = false;
+//       }
+//     } else {
+//       // same day -> restore visited list
+//       final raw = _box.read<List>(_visitedKeyFor(_todayKey)) ?? [];
+//       final visitedNames = raw.cast<String>();
+//       for (final jp in _all) {
+//         jp.isVisited = visitedNames.contains(jp.name);
+//       }
+//     }
 //   }
 
 //   /* --------------------------- Location & distance --------------------------- */
@@ -1206,8 +1343,14 @@ class _GlassJourneyCard extends StatelessWidget {
 
 //   /* ---------------------- Forced popup / visited flow ---------------------- */
 
-//   // When user taps "Visited" chip
 //   void _onToggleVisited(_JourneyWithDistance item) {
+//     // if today already ended, just show info
+//     final journeyEnded = _box.read<bool>(_endedKeyFor(_todayKey)) ?? false;
+//     if (journeyEnded) {
+//       _maybeShowJourneyEnded();
+//       return;
+//     }
+
 //     if (_currentPos == null) {
 //       ScaffoldMessenger.of(context).showSnackBar(
 //         const SnackBar(
@@ -1238,12 +1381,10 @@ class _GlassJourneyCard extends StatelessWidget {
 //       return;
 //     }
 
-//     // inside radius -> start visit flow
 //     _startVisitFlow(item.supervisor);
 //   }
 
 //   void _startVisitFlow(JourneyPlanSupervisor jp) {
-//     // Persist which outlet is pending
 //     _box.write(_pendingVisitKey, jp.name);
 //     _showVisitPopup(jp);
 //   }
@@ -1252,7 +1393,6 @@ class _GlassJourneyCard extends StatelessWidget {
 //     final pendingName = _box.read<String>(_pendingVisitKey);
 //     if (pendingName == null) return;
 
-//     // find that outlet
 //     JourneyPlanSupervisor? jp;
 //     for (final s in _all) {
 //       if (s.name == pendingName) {
@@ -1262,7 +1402,6 @@ class _GlassJourneyCard extends StatelessWidget {
 //     }
 //     if (jp == null) return;
 
-//     // show popup after first frame
 //     WidgetsBinding.instance.addPostFrameCallback((_) {
 //       _showVisitPopup(jp!);
 //     });
@@ -1271,14 +1410,14 @@ class _GlassJourneyCard extends StatelessWidget {
 //   Future<void> _showVisitPopup(JourneyPlanSupervisor jp) async {
 //     final result = await showDialog<Map<String, dynamic>?>(
 //       context: context,
-//       barrierDismissible: false, // can't tap outside to close
+//       barrierDismissible: false,
 //       builder: (ctx) {
 //         XFile? pickedImage;
 //         final commentCtrl = TextEditingController();
 //         bool submitting = false;
 
 //         return WillPopScope(
-//           onWillPop: () async => false, // disable Android back
+//           onWillPop: () async => false,
 //           child: StatefulBuilder(
 //             builder: (ctx, setState) {
 //               Future<void> _pickImage() async {
@@ -1308,9 +1447,9 @@ class _GlassJourneyCard extends StatelessWidget {
 //                 title: Column(
 //                   crossAxisAlignment: CrossAxisAlignment.start,
 //                   children: [
-//                     Text(
+//                     const Text(
 //                       'Visit details',
-//                       style: const TextStyle(
+//                       style: TextStyle(
 //                         fontFamily: 'ClashGrotesk',
 //                         fontWeight: FontWeight.w700,
 //                         fontSize: 18,
@@ -1332,7 +1471,6 @@ class _GlassJourneyCard extends StatelessWidget {
 //                   child: Column(
 //                     mainAxisSize: MainAxisSize.min,
 //                     children: [
-//                       // photo preview
 //                       Container(
 //                         height: 160,
 //                         width: double.infinity,
@@ -1411,7 +1549,8 @@ class _GlassJourneyCard extends StatelessWidget {
 //                         minLines: 3,
 //                         onChanged: (_) => setState(() {}),
 //                         decoration: InputDecoration(
-//                           hintText: 'Write 3–4 lines about display, stock, etc.',
+//                           hintText:
+//                               'Write 3–4 lines about display, stock, etc.',
 //                           hintStyle: const TextStyle(
 //                             fontFamily: 'ClashGrotesk',
 //                             fontSize: 12,
@@ -1449,8 +1588,7 @@ class _GlassJourneyCard extends StatelessWidget {
 //                       onPressed: canSubmit
 //                           ? () async {
 //                               setState(() => submitting = true);
-//                               // TODO: call API to send image + comment if needed
-
+//                               // TODO: send image + comment to API if needed
 //                               Navigator.of(ctx).pop(<String, dynamic>{
 //                                 'imagePath': pickedImage!.path,
 //                                 'comment': commentCtrl.text.trim(),
@@ -1485,22 +1623,88 @@ class _GlassJourneyCard extends StatelessWidget {
 //       },
 //     );
 
-//     // result is null if somehow dialog was killed (should only happen on app kill)
 //     if (result != null) {
-//       // user completed form
-//       setState(() {
-//         jp.isVisited = true;
-//       });
 //       _box.remove(_pendingVisitKey);
-//       _buildMarkers();
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(
-//           content: Text('Visit saved for ${jp.name}'),
-//         ),
-//       );
-//     } else {
-//       // keep pending key so popup appears again next time
+//       _markVisitedPersist(jp);
 //     }
+//   }
+
+//   void _markVisitedPersist(JourneyPlanSupervisor jp) {
+//     setState(() {
+//       jp.isVisited = true;
+//     });
+
+//     final key = _visitedKeyFor(_todayKey);
+//     final raw = _box.read<List>(key) ?? [];
+//     final visited = raw.cast<String>();
+//     if (!visited.contains(jp.name)) {
+//       visited.add(jp.name);
+//     }
+//     _box.write(key, visited);
+
+//     _buildMarkers();
+
+//     if (_completedLocations == _totalLocations) {
+//       _box.write(_endedKeyFor(_todayKey), true);
+//       _maybeShowJourneyEnded();
+//     }
+//   }
+
+//   /* --------------------------- Journey ended popup --------------------------- */
+
+//   void _maybeShowJourneyEnded() {
+//     final ended = _box.read<bool>(_endedKeyFor(_todayKey)) ?? false;
+//     if (!ended) return;
+
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       _showJourneyEndedDialog();
+//     });
+//   }
+
+//   Future<void> _showJourneyEndedDialog() async {
+//     await showDialog<void>(
+//       context: context,
+//       barrierDismissible: false,
+//       builder: (ctx) {
+//         return WillPopScope(
+//           onWillPop: () async => false,
+//           child: AlertDialog(
+//             shape: RoundedRectangleBorder(
+//               borderRadius: BorderRadius.circular(20),
+//             ),
+//             title: const Text(
+//               "Today's journey ended",
+//               style: TextStyle(
+//                 fontFamily: 'ClashGrotesk',
+//                 fontWeight: FontWeight.w700,
+//               ),
+//             ),
+//             content: const Text(
+//               'You have visited all outlets planned for today.\n\n'
+//               'Please come back tomorrow to start a new journey.',
+//               style: TextStyle(
+//                 fontFamily: 'ClashGrotesk',
+//                 fontSize: 13,
+//               ),
+//             ),
+//             actions: [
+//               TextButton(
+//                 onPressed: () {
+//                   Navigator.of(ctx).pop();
+//                 },
+//                 child: const Text(
+//                   'OK',
+//                   style: TextStyle(
+//                     fontFamily: 'ClashGrotesk',
+//                     fontWeight: FontWeight.w600,
+//                   ),
+//                 ),
+//               ),
+//             ],
+//           ),
+//         );
+//       },
+//     );
 //   }
 
 //   /* --------------------------- RECENTER BUTTON --------------------------- */
@@ -1587,1297 +1791,65 @@ class _GlassJourneyCard extends StatelessWidget {
 //               // header
 //               Padding(
 //                 padding:
-//                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+//                     const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
 //                 child: Row(
 //                   children: [
 //                     Expanded(
 //                       child: Padding(
-//                         padding: const EdgeInsets.only(top: 8.0, left: 4),
-//                         child: Column(
+//                         padding: const EdgeInsets.only(bottom: 0),
+//                         child: Row(
 //                           crossAxisAlignment: CrossAxisAlignment.start,
 //                           children: [
 //                             const Text(
-//                               'Journey Plan Map',
+//                               'Journey Plan',
 //                               style: TextStyle(
 //                                 color: Colors.white,
-//                                 fontSize: 20,
-//                                 fontWeight: FontWeight.w700,
-//                                 fontFamily: 'ClashGrotesk',
+//                                 fontSize: 25,
+//                                 fontWeight: FontWeight.bold,
+//                               //  fontFamily: 'ClashGrotesk',
 //                               ),
 //                             ),
-//                             const SizedBox(height: 2),
-//                             Text(
-//                               'Total: $_totalLocations  •  Done: $_completedLocations',
-//                               style: const TextStyle(
-//                                 color: Colors.white70,
-//                                 fontSize: 12,
-//                                 fontWeight: FontWeight.w900,
-//                                 fontFamily: 'ClashGrotesk',
+//                                    const Text(
+//                               '',
+//                               style: TextStyle(
+//                                 color: Colors.white,
+//                                 fontSize: 25,
+//                                 fontWeight: FontWeight.bold,
+//                               //  fontFamily: 'ClashGrotesk',
 //                               ),
 //                             ),
+//                            // const SizedBox(height: 2),
+//                             // Text(
+//                             //   'Total: $_totalLocations  •  Done: $_completedLocations',
+//                             //   style: const TextStyle(
+//                             //     color: Colors.white,
+//                             //     fontSize: 14,
+//                             //     fontWeight: FontWeight.w900,
+//                             //   //  fontFamily: 'ClashGrotesk',
+//                             //   ),
+//                             // ),
 //                           ],
 //                         ),
 //                       ),
 //                     ),
-//                     Padding(
-//                       padding: EdgeInsets.only(
-//                         top: MediaQuery.of(context).size.height * 0.16,
-//                       ),
-//                       child: IconButton(
-//                         icon: const Icon(
-//                           Icons.my_location_rounded,
-//                           color: Colors.black,
-//                           size: 32,
-//                         ),
-//                         tooltip: 'Re-center on my location',
-//                         onPressed: _recenterOnUser,
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-
-//               if (!_loading && _error != null)
-//                 Center(
-//                   child: Container(
-//                     padding: const EdgeInsets.symmetric(
-//                         horizontal: 16, vertical: 12),
-//                     margin: const EdgeInsets.symmetric(horizontal: 24),
-//                     decoration: BoxDecoration(
-//                       color: Colors.black.withOpacity(0.6),
-//                       borderRadius: BorderRadius.circular(12),
-//                     ),
-//                     child: Text(
-//                       _error!,
-//                       textAlign: TextAlign.center,
-//                       style: const TextStyle(
-//                         color: Colors.white,
-//                         fontFamily: 'ClashGrotesk',
-//                         fontWeight: FontWeight.w600,
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-
-//               if (!_loading && _error == null)
-//                 Align(
-//                   alignment: Alignment.bottomCenter,
-//                   child: Padding(
-//                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-//                     child: ClipRRect(
-//                       borderRadius: BorderRadius.circular(20),
-//                       child: BackdropFilter(
-//                         filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-//                         child: Container(
-//                           width: double.infinity,
-//                           constraints: const BoxConstraints(maxHeight: 260),
-//                           decoration: BoxDecoration(
-//                             color: Colors.white.withOpacity(0.16),
-//                             borderRadius: BorderRadius.circular(20),
-//                             border: Border.all(
-//                               color: Colors.white.withOpacity(0.35),
-//                               width: 1.3,
-//                             ),
-//                           ),
-//                           child: Column(
-//                             crossAxisAlignment: CrossAxisAlignment.start,
-//                             children: [
-//                               Padding(
-//                                 padding: const EdgeInsets.fromLTRB(
-//                                     16, 10, 16, 4),
-//                                 child: Row(
-//                                   children: [
-//                                     const Text(
-//                                       'Nearby Outlets',
-//                                       style: TextStyle(
-//                                         color: Colors.black,
-//                                         fontWeight: FontWeight.w900,
-//                                         fontSize: 15,
-//                                         fontFamily: 'ClashGrotesk',
-//                                       ),
-//                                     ),
-//                                     const Spacer(),
-//                                     Column(
-//                                       crossAxisAlignment:
-//                                           CrossAxisAlignment.end,
-//                                       children: [
-//                                         Text(
-//                                           '${_items.length} stops',
-//                                           style: const TextStyle(
-//                                             color: Colors.black,
-//                                             fontSize: 12,
-//                                             fontWeight: FontWeight.w900,
-//                                             fontFamily: 'ClashGrotesk',
-//                                           ),
-//                                         ),
-//                                         Text(
-//                                           'Done: $_completedLocations',
-//                                           style: const TextStyle(
-//                                             color: Colors.greenAccent,
-//                                             fontSize: 12,
-//                                             fontWeight: FontWeight.w900,
-//                                             fontFamily: 'ClashGrotesk',
-//                                           ),
-//                                         ),
-//                                       ],
-//                                     ),
-//                                   ],
-//                                 ),
-//                               ),
-//                               const SizedBox(height: 4),
-//                               Expanded(
-//                                 child: ListView.separated(
-//                                   padding: const EdgeInsets.fromLTRB(
-//                                       12, 4, 12, 12),
-//                                   itemCount: _items.length,
-//                                   separatorBuilder: (_, __) =>
-//                                       const SizedBox(height: 8),
-//                                   itemBuilder: (_, i) {
-//                                     final item = _items[i];
-//                                     return _GlassJourneyCard(
-//                                       index: i + 1,
-//                                       data: item,
-//                                       onTap: () {
-//                                         _mapController?.animateCamera(
-//                                           CameraUpdate.newCameraPosition(
-//                                             CameraPosition(
-//                                               target: LatLng(
-//                                                 item.supervisor.lat,
-//                                                 item.supervisor.lng,
-//                                               ),
-//                                               zoom: 15.5,
-//                                             ),
-//                                           ),
-//                                         );
-//                                       },
-//                                       onToggleVisited: () =>
-//                                           _onToggleVisited(item),
-//                                     );
-//                                   },
-//                                 ),
-//                               ),
-//                             ],
-//                           ),
-//                         ),
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-// /* --------------------------- Glass Card Row --------------------------- */
-
-// class _GlassJourneyCard extends StatelessWidget {
-//   const _GlassJourneyCard({
-//     required this.index,
-//     required this.data,
-//     required this.onTap,
-//     required this.onToggleVisited,
-//   });
-
-//   final int index;
-//   final _JourneyWithDistance data;
-//   final VoidCallback onTap;
-//   final VoidCallback onToggleVisited;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final jp = data.supervisor;
-//     final distText = '${data.distanceKm.toStringAsFixed(1)} km';
-
-//     return InkWell(
-//       onTap: onTap,
-//       borderRadius: BorderRadius.circular(16),
-//       child: Container(
-//         decoration: BoxDecoration(
-//           color: Colors.black.withOpacity(0.18),
-//           borderRadius: BorderRadius.circular(16),
-//           border: Border.all(
-//             color: Colors.black.withOpacity(0.5),
-//             width: 0.9,
-//           ),
-//         ),
-//         padding: const EdgeInsets.all(10),
-//         child: Row(
-//           children: [
-//             Container(
-//               width: 34,
-//               height: 34,
-//               decoration: BoxDecoration(
-//                 gradient: const LinearGradient(
-//                   colors: [Colors.white, Color(0xFFECFEFF)],
-//                 ),
-//                 borderRadius: BorderRadius.circular(10),
-//               ),
-//               child: Center(
-//                 child: Text(
-//                   '$index',
-//                   style: const TextStyle(
-//                     fontWeight: FontWeight.w800,
-//                     fontFamily: 'ClashGrotesk',
-//                     color: kText,
-//                   ),
-//                 ),
-//               ),
-//             ),
-//             const SizedBox(width: 10),
-//             Expanded(
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Text(
-//                     jp.name,
-//                     maxLines: 1,
-//                     overflow: TextOverflow.ellipsis,
-//                     style: const TextStyle(
-//                       color: Colors.white,
-//                       fontSize: 14,
-//                       fontWeight: FontWeight.w700,
-//                       fontFamily: 'ClashGrotesk',
-//                     ),
-//                   ),
-//                   const SizedBox(height: 2),
-//                   Row(
-//                     children: [
-//                       const Icon(Icons.location_on_rounded,
-//                           size: 14, color: Colors.white70),
-//                       const SizedBox(width: 4),
-//                       Text(
-//                         distText,
-//                         style: const TextStyle(
-//                           color: Colors.white,
-//                           fontSize: 12,
-//                           fontWeight: FontWeight.w600,
-//                           fontFamily: 'ClashGrotesk',
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-//             ),
-//             const SizedBox(width: 8),
-//             InkWell(
-//               borderRadius: BorderRadius.circular(999),
-//               onTap: onToggleVisited,
-//               child: Container(
-//                 padding:
-//                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-//                 decoration: BoxDecoration(
-//                   borderRadius: BorderRadius.circular(999),
-//                   color: jp.isVisited
-//                       ? Colors.greenAccent.withOpacity(0.18)
-//                       : Colors.orangeAccent.withOpacity(0.18),
-//                   border: Border.all(
-//                     color: jp.isVisited
-//                         ? Colors.greenAccent
-//                         : Colors.orangeAccent,
-//                   ),
-//                 ),
-//                 child: Row(
-//                   mainAxisSize: MainAxisSize.min,
-//                   children: [
-//                     Icon(
-//                       jp.isVisited
-//                           ? Icons.check_circle_rounded
-//                           : Icons.radio_button_unchecked_rounded,
-//                       size: 16,
-//                       color: jp.isVisited
-//                           ? Colors.greenAccent
-//                           : Colors.orangeAccent,
-//                     ),
-//                     const SizedBox(width: 4),
-//                     Text(
-//                       jp.isVisited ? 'Visited' : 'Pending',
-//                       style: const TextStyle(
-//                         color: Colors.white,
-//                         fontSize: 11,
-//                         fontWeight: FontWeight.w700,
-//                         fontFamily: 'ClashGrotesk',
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-
-/*
-const kText = Color(0xFF1E1E1E);
-const kMuted = Color(0xFF707883);
-const kShadow = Color(0x14000000);
-
-const _kGrad = LinearGradient(
-  colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
-  begin: Alignment.topLeft,
-  end: Alignment.bottomRight,
-);
-
-// how close user must be to mark "Visited" (in meters)
-const double kVisitRadiusMeters = 200;
-
-/* --------------------------- Helper Class --------------------------- */
-
-class _JourneyWithDistance {
-  final JourneyPlanSupervisor supervisor;
-  final double distanceKm;
-
-  _JourneyWithDistance({
-    required this.supervisor,
-    required this.distanceKm,
-  });
-}
-
-/* --------------------------- Main Screen --------------------------- */
-
-class JourneyPlanMapScreen extends StatefulWidget {
-  const JourneyPlanMapScreen({super.key});
-
-  @override
-  State<JourneyPlanMapScreen> createState() => _JourneyPlanMapScreenState();
-}
-
-class _JourneyPlanMapScreenState extends State<JourneyPlanMapScreen> {
-  Position? _currentPos;
-  String? _error;
-  bool _loading = true;
-
-  late List<JourneyPlanSupervisor> _all;
-  List<_JourneyWithDistance> _items = [];
-
-  GoogleMapController? _mapController;
-  final Set<Marker> _markers = {};
-
-  int get _totalLocations => _all.length;
-  int get _completedLocations =>
-      _all.where((jp) => jp.isVisited == true).length;
-
-  @override
-  void initState() {
-    super.initState();
-    _all = List<JourneyPlanSupervisor>.from(kJourneyPlan);
-    _initLocation();
-  }
-
-  Future<void> _initLocation() async {
-    try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        setState(() {
-          _error = 'Location services are disabled.';
-          _loading = false;
-        });
-        return;
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        setState(() {
-          _error = 'Location permission denied.';
-          _loading = false;
-        });
-        return;
-      }
-
-      final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      _currentPos = pos;
-      _computeDistancesAndMarkers();
-    } catch (e) {
-      setState(() {
-        _error = 'Failed to get location: $e';
-        _loading = false;
-      });
-    }
-  }
-
-  void _computeDistancesAndMarkers() {
-    if (_currentPos == null) {
-      setState(() {
-        _error = 'Current location unavailable.';
-        _loading = false;
-      });
-      return;
-    }
-
-    final lat1 = _currentPos!.latitude;
-    final lon1 = _currentPos!.longitude;
-
-    _items = _all
-        .map(
-          (jp) => _JourneyWithDistance(
-            supervisor: jp,
-            distanceKm: distanceInKm(lat1, lon1, jp.lat, jp.lng),
-          ),
-        )
-        .toList()
-      ..sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
-
-    _buildMarkers();
-
-    setState(() {
-      _loading = false;
-      _error = null;
-    });
-
-    if (_mapController != null) {
-      _mapController!.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: LatLng(lat1, lon1),
-            zoom: 12.5,
-          ),
-        ),
-      );
-    }
-  }
-
-  void _buildMarkers() {
-    final markers = <Marker>{};
-
-    // Current location marker
-    if (_currentPos != null) {
-      markers.add(
-        Marker(
-          markerId: const MarkerId('current_location'),
-          position: LatLng(_currentPos!.latitude, _currentPos!.longitude),
-          infoWindow: const InfoWindow(title: 'You are here'),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueAzure,
-          ),
-        ),
-      );
-    }
-
-    // Journey plan markers
-    for (final item in _items) {
-      final jp = item.supervisor;
-      markers.add(
-        Marker(
-          markerId: MarkerId(jp.name),
-          position: LatLng(jp.lat, jp.lng),
-          infoWindow: InfoWindow(
-            title: jp.name,
-            snippet: '${item.distanceKm.toStringAsFixed(1)} km away',
-          ),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            jp.isVisited ? BitmapDescriptor.hueGreen : BitmapDescriptor.hueRed,
-          ),
-        ),
-      );
-    }
-
-    setState(() {
-      _markers
-        ..clear()
-        ..addAll(markers);
-    });
-  }
-
-  /* 🔒 Only allow visited if user is physically at that location */
-  void _onToggleVisited(_JourneyWithDistance item) {
-    if (_currentPos == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Current location not available yet.'),
-        ),
-      );
-      return;
-    }
-
-    // distance between user and this outlet
-    final dKm = distanceInKm(
-      _currentPos!.latitude,
-      _currentPos!.longitude,
-      item.supervisor.lat,
-      item.supervisor.lng,
-    );
-    final dMeters = dKm * 1000;
-
-    if (dMeters > kVisitRadiusMeters) {
-      // too far → show error, do NOT toggle
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'You must be at ${item.supervisor.name} (within '
-            '${kVisitRadiusMeters.toStringAsFixed(0)} m).\n'
-            'Current distance: ${dMeters.toStringAsFixed(0)} m',
-          ),
-        ),
-      );
-      return;
-    }
-
-    // close enough → mark visited/unvisited
-    setState(() {
-      item.supervisor.isVisited = !item.supervisor.isVisited;
-    });
-    _buildMarkers(); // update marker color
-  }
-
-  /* --------------------------- RECENTER BUTTON --------------------------- */
-
-  Future<void> _recenterOnUser() async {
-    if (_mapController == null) return;
-
-    // If no location yet, try to fetch again
-    if (_currentPos == null) {
-      setState(() => _loading = true);
-      await _initLocation();
-      setState(() => _loading = false);
-      if (_currentPos == null) return;
-    }
-
-    final target = LatLng(
-      _currentPos!.latitude,
-      _currentPos!.longitude,
-    );
-
-    await _mapController!.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: target,
-          zoom: 15.0,
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hasLocation = _currentPos != null;
-
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: _kGrad,
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              // Map
-              Positioned.fill(
-                child: hasLocation
-                    ? GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(
-                            _currentPos!.latitude,
-                            _currentPos!.longitude,
-                          ),
-                          zoom: 12.0,
-                        ),
-                        myLocationEnabled: true,
-                        myLocationButtonEnabled: false,
-                        compassEnabled: true,
-                        markers: _markers,
-                        onMapCreated: (c) {
-                          _mapController = c;
-                        },
-                      )
-                    : const Center(
-                        child: CircularProgressIndicator(
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      ),
-              ),
-
-              // Top dark gradient overlay
-              Container(
-                height: 96,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.black.withOpacity(0.4),
-                      Colors.transparent,
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-              ),
-
-              // Header with stats + recenter button
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 8.0, left: 4),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Journey Plan Map',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'ClashGrotesk',
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Total: $_totalLocations  •  Done: $_completedLocations',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                                fontFamily: 'ClashGrotesk',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.only(
-                        top: MediaQuery.of(context).size.height * 0.16,
-                      ),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.my_location_rounded,
-                          color: Colors.black,
-                          size: 32,
-                        ),
-                        tooltip: 'Re-center on my location',
-                        onPressed: _recenterOnUser,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Error overlay
-              if (!_loading && _error != null)
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    margin: const EdgeInsets.symmetric(horizontal: 24),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _error!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontFamily: 'ClashGrotesk',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-
-              // Glass bottom sheet with list
-              if (!_loading && _error == null)
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                        child: Container(
-                          width: double.infinity,
-                          constraints: const BoxConstraints(maxHeight: 260),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.16),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.35),
-                              width: 1.3,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Sheet header
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                    16, 10, 16, 4),
-                                child: Row(
-                                  children: [
-                                    const Text(
-                                      'Nearby Outlets',
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 15,
-                                        fontFamily: 'ClashGrotesk',
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          '${_items.length} stops',
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w900,
-                                            fontFamily: 'ClashGrotesk',
-                                          ),
-                                        ),
-                                        Text(
-                                          'Done: $_completedLocations',
-                                          style: const TextStyle(
-                                            color: Colors.greenAccent,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w900,
-                                            fontFamily: 'ClashGrotesk',
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Expanded(
-                                child: ListView.separated(
-                                  padding: const EdgeInsets.fromLTRB(
-                                      12, 4, 12, 12),
-                                  itemCount: _items.length,
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(height: 8),
-                                  itemBuilder: (_, i) {
-                                    final item = _items[i];
-                                    return _GlassJourneyCard(
-                                      index: i + 1,
-                                      data: item,
-                                      onTap: () {
-                                        _mapController?.animateCamera(
-                                          CameraUpdate.newCameraPosition(
-                                            CameraPosition(
-                                              target: LatLng(
-                                                item.supervisor.lat,
-                                                item.supervisor.lng,
-                                              ),
-                                              zoom: 15.5,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      onToggleVisited: () =>
-                                          _onToggleVisited(item),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/* --------------------------- Glass Card Row --------------------------- */
-
-class _GlassJourneyCard extends StatelessWidget {
-  const _GlassJourneyCard({
-    required this.index,
-    required this.data,
-    required this.onTap,
-    required this.onToggleVisited,
-  });
-
-  final int index;
-  final _JourneyWithDistance data;
-  final VoidCallback onTap;
-  final VoidCallback onToggleVisited;
-
-  @override
-  Widget build(BuildContext context) {
-    final jp = data.supervisor;
-    final distText = '${data.distanceKm.toStringAsFixed(1)} km';
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.18),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.black.withOpacity(0.5),
-            width: 0.9,
-          ),
-        ),
-        padding: const EdgeInsets.all(10),
-        child: Row(
-          children: [
-            // index badge
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Colors.white, Color(0xFFECFEFF)],
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Text(
-                  '$index',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'ClashGrotesk',
-                    color: kText,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-
-            // name + distance
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    jp.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'ClashGrotesk',
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_rounded,
-                          size: 14, color: Colors.white70),
-                      const SizedBox(width: 4),
-                      Text(
-                        distText,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'ClashGrotesk',
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(width: 8),
-
-            // visited chip (tap will be validated in _onToggleVisited)
-            InkWell(
-              borderRadius: BorderRadius.circular(999),
-              onTap: onToggleVisited,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  color: jp.isVisited
-                      ? Colors.greenAccent.withOpacity(0.18)
-                      : Colors.orangeAccent.withOpacity(0.18),
-                  border: Border.all(
-                    color: jp.isVisited
-                        ? Colors.greenAccent
-                        : Colors.orangeAccent,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      jp.isVisited
-                          ? Icons.check_circle_rounded
-                          : Icons.radio_button_unchecked_rounded,
-                      size: 16,
-                      color: jp.isVisited
-                          ? Colors.greenAccent
-                          : Colors.orangeAccent,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      jp.isVisited ? 'Visited' : 'Pending',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'ClashGrotesk',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}*/
-
-
-// const kText = Color(0xFF1E1E1E);
-// const kMuted = Color(0xFF707883);
-// const kShadow = Color(0x14000000);
-
-// const _kGrad = LinearGradient(
-//   colors: [Color(0xFF00C6FF), Color(0xFF7F53FD)],
-//   begin: Alignment.topLeft,
-//   end: Alignment.bottomRight,
-// );
-
-
-// class _JourneyWithDistance {
-//   final JourneyPlanSupervisor supervisor;
-//   final double distanceKm;
-
-//   _JourneyWithDistance({
-//     required this.supervisor,
-//     required this.distanceKm,
-//   });
-// }
-
-// /* --------------------------- Main Screen --------------------------- */
-
-// class JourneyPlanMapScreen extends StatefulWidget {
-//   const JourneyPlanMapScreen({super.key});
-
-//   @override
-//   State<JourneyPlanMapScreen> createState() => _JourneyPlanMapScreenState();
-// }
-
-// class _JourneyPlanMapScreenState extends State<JourneyPlanMapScreen> {
-//   Position? _currentPos;
-//   String? _error;
-//   bool _loading = true;
-
-//   late List<JourneyPlanSupervisor> _all;
-//   List<_JourneyWithDistance> _items = [];
-
-//   GoogleMapController? _mapController;
-//   final Set<Marker> _markers = {};
-
-//   int get _totalLocations => _all.length;
-//   int get _completedLocations =>
-//       _all.where((jp) => jp.isVisited == true).length;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _all = List<JourneyPlanSupervisor>.from(kJourneyPlan);
-//     _initLocation();
-//   }
-
-//   Future<void> _initLocation() async {
-//     try {
-//       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-//       if (!serviceEnabled) {
-//         setState(() {
-//           _error = 'Location services are disabled.';
-//           _loading = false;
-//         });
-//         return;
-//       }
-
-//       LocationPermission permission = await Geolocator.checkPermission();
-//       if (permission == LocationPermission.denied) {
-//         permission = await Geolocator.requestPermission();
-//       }
-//       if (permission == LocationPermission.denied ||
-//           permission == LocationPermission.deniedForever) {
-//         setState(() {
-//           _error = 'Location permission denied.';
-//           _loading = false;
-//         });
-//         return;
-//       }
-
-//       final pos = await Geolocator.getCurrentPosition(
-//         desiredAccuracy: LocationAccuracy.high,
-//       );
-
-//       _currentPos = pos;
-//       _computeDistancesAndMarkers();
-//     } catch (e) {
-//       setState(() {
-//         _error = 'Failed to get location: $e';
-//         _loading = false;
-//       });
-//     }
-//   }
-
-//   void _computeDistancesAndMarkers() {
-//     if (_currentPos == null) {
-//       setState(() {
-//         _error = 'Current location unavailable.';
-//         _loading = false;
-//       });
-//       return;
-//     }
-
-//     final lat1 = _currentPos!.latitude;
-//     final lon1 = _currentPos!.longitude;
-
-//     _items = _all
-//         .map(
-//           (jp) => _JourneyWithDistance(
-//             supervisor: jp,
-//             distanceKm: distanceInKm(lat1, lon1, jp.lat, jp.lng),
-//           ),
-//         )
-//         .toList()
-//       ..sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
-
-//     _buildMarkers();
-
-//     setState(() {
-//       _loading = false;
-//       _error = null;
-//     });
-
-//     if (_mapController != null) {
-//       _mapController!.animateCamera(
-//         CameraUpdate.newCameraPosition(
-//           CameraPosition(
-//             target: LatLng(lat1, lon1),
-//             zoom: 12.5,
-//           ),
-//         ),
-//       );
-//     }
-//   }
-
-//   void _buildMarkers() {
-//     final markers = <Marker>{};
-
-//     // Current location marker
-//     if (_currentPos != null) {
-//       markers.add(
-//         Marker(
-//           markerId: const MarkerId('current_location'),
-//           position: LatLng(_currentPos!.latitude, _currentPos!.longitude),
-//           infoWindow: const InfoWindow(title: 'You are here'),
-//           icon: BitmapDescriptor.defaultMarkerWithHue(
-//             BitmapDescriptor.hueAzure,
-//           ),
-//         ),
-//       );
-//     }
-
-//     // Journey plan markers
-//     for (final item in _items) {
-//       final jp = item.supervisor;
-//       markers.add(
-//         Marker(
-//           markerId: MarkerId(jp.name),
-//           position: LatLng(jp.lat, jp.lng),
-//           infoWindow: InfoWindow(
-//             title: jp.name,
-//             snippet: '${item.distanceKm.toStringAsFixed(1)} km away',
-//           ),
-//           icon: BitmapDescriptor.defaultMarkerWithHue(
-//             jp.isVisited ? BitmapDescriptor.hueGreen : BitmapDescriptor.hueRed,
-//           ),
-//         ),
-//       );
-//     }
-
-//     setState(() {
-//       _markers
-//         ..clear()
-//         ..addAll(markers);
-//     });
-//   }
-
-//   void _onToggleVisited(_JourneyWithDistance item) {
-//     setState(() {
-//       item.supervisor.isVisited = !item.supervisor.isVisited;
-//     });
-//     _buildMarkers(); // this also triggers marker color change
-//   }
-
-//   /* --------------------------- RECENTER BUTTON --------------------------- */
-
-//   Future<void> _recenterOnUser() async {
-//     if (_mapController == null) return;
-
-//     // If no location yet, try to fetch again
-//     if (_currentPos == null) {
-//       setState(() => _loading = true);
-//       await _initLocation();
-//       setState(() => _loading = false);
-//       if (_currentPos == null) return;
-//     }
-
-//     final target = LatLng(
-//       _currentPos!.latitude,
-//       _currentPos!.longitude,
-//     );
-
-//     await _mapController!.animateCamera(
-//       CameraUpdate.newCameraPosition(
-//         CameraPosition(
-//           target: target,
-//           zoom: 15.0,
-//         ),
-//       ),
-//     );
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final hasLocation = _currentPos != null;
-
-//     return Scaffold(
-//       body: Container(
-//         decoration: const BoxDecoration(
-//           gradient: _kGrad,
-//         ),
-//         child: SafeArea(
-//           child: Stack(
-//             children: [
-//               // Map
-//               Positioned.fill(
-//                 child: hasLocation
-//                     ? GoogleMap(
-//                         initialCameraPosition: CameraPosition(
-//                           target: LatLng(
-//                             _currentPos!.latitude,
-//                             _currentPos!.longitude,
-//                           ),
-//                           zoom: 12.0,
-//                         ),
-//                         myLocationEnabled: true,
-//                         myLocationButtonEnabled:
-//                             false, // we use our own recenter button
-//                         compassEnabled: true,
-//                         markers: _markers,
-//                         onMapCreated: (c) {
-//                           _mapController = c;
-//                         },
-//                       )
-//                     : const Center(
-//                         child: CircularProgressIndicator(
-//                           valueColor:
-//                               AlwaysStoppedAnimation<Color>(Colors.white),
-//                         ),
-//                       ),
-//               ),
-
-//               // Top dark gradient overlay
-//               Container(
-//                 height: 96,
-//                 decoration: BoxDecoration(
-//                   gradient: LinearGradient(
-//                     colors: [
-//                       Colors.black.withOpacity(0.4),
-//                       Colors.transparent,
-//                     ],
-//                     begin: Alignment.topCenter,
-//                     end: Alignment.bottomCenter,
-//                   ),
-//                 ),
-//               ),
-
-//               // Header with stats + recenter button
-//               Padding(
-//                 padding:
-//                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-//                 child: Row(
-//                   children: [
-//                     // If you want a back button, uncomment this:
-//                     // IconButton(
-//                     //   icon: const Icon(Icons.arrow_back_ios_new_rounded,
-//                     //       color: Colors.white),
-//                     //   onPressed: () => Navigator.pop(context),
+//                     // Padding(
+//                     //   padding: EdgeInsets.only(
+//                     //     top: MediaQuery.of(context).size.height * 0.16,
+//                     //   ),
+//                     //   child: IconButton(
+//                     //     icon: const Icon(
+//                     //       Icons.my_location_rounded,
+//                     //       color: Colors.black,
+//                     //       size: 32,
+//                     //     ),
+//                     //     tooltip: 'Re-center on my location',
+//                     //     onPressed: _recenterOnUser,
+//                     //   ),
 //                     // ),
-//                     // const SizedBox(width: 4),
-
-//                     Expanded(
-//                       child: Padding(
-//                         padding: const EdgeInsets.only(top: 8.0, left: 4),
-//                         child: Column(
-//                           crossAxisAlignment: CrossAxisAlignment.start,
-//                           children: [
-//                             const Text(
-//                               'Journey Plan Map',
-//                               style: TextStyle(
-//                                 color: Colors.white,
-//                                 fontSize: 20,
-//                                 fontWeight: FontWeight.w700,
-//                                 fontFamily: 'ClashGrotesk',
-//                               ),
-//                             ),
-//                             const SizedBox(height: 2),
-//                             Text(
-//                               'Total: $_totalLocations  •  Done: $_completedLocations',
-//                               style: const TextStyle(
-//                                 color: Colors.white70,
-//                                 fontSize: 12,
-//                                 fontWeight: FontWeight.w900,
-//                                 fontFamily: 'ClashGrotesk',
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//                       ),
-//                     ),
-
-//                     Padding(
-//                       padding:  EdgeInsets.only(top: MediaQuery.of(context).size.height *0.16),
-//                       child: IconButton(
-//                         icon: const Icon(
-//                           Icons.my_location_rounded,
-//                           color: Colors.black,
-//                           size: 32,
-//                         ),
-//                         tooltip: 'Re-center on my location',
-//                         onPressed: _recenterOnUser,
-//                       ),
-//                     ),
 //                   ],
 //                 ),
 //               ),
 
-//               // Error overlay
 //               if (!_loading && _error != null)
 //                 Center(
 //                   child: Container(
@@ -2900,7 +1872,6 @@ class _GlassJourneyCard extends StatelessWidget {
 //                   ),
 //                 ),
 
-//               // Glass bottom sheet with list
 //               if (!_loading && _error == null)
 //                 Align(
 //                   alignment: Alignment.bottomCenter,
@@ -2924,7 +1895,6 @@ class _GlassJourneyCard extends StatelessWidget {
 //                           child: Column(
 //                             crossAxisAlignment: CrossAxisAlignment.start,
 //                             children: [
-//                               // Sheet header
 //                               Padding(
 //                                 padding: const EdgeInsets.fromLTRB(
 //                                     16, 10, 16, 4),
@@ -3049,7 +2019,6 @@ class _GlassJourneyCard extends StatelessWidget {
 //         padding: const EdgeInsets.all(10),
 //         child: Row(
 //           children: [
-//             // index badge
 //             Container(
 //               width: 34,
 //               height: 34,
@@ -3071,8 +2040,6 @@ class _GlassJourneyCard extends StatelessWidget {
 //               ),
 //             ),
 //             const SizedBox(width: 10),
-
-//             // name + distance
 //             Expanded(
 //               child: Column(
 //                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -3108,10 +2075,7 @@ class _GlassJourneyCard extends StatelessWidget {
 //                 ],
 //               ),
 //             ),
-
 //             const SizedBox(width: 8),
-
-//             // visited chip
 //             InkWell(
 //               borderRadius: BorderRadius.circular(999),
 //               onTap: onToggleVisited,
@@ -3161,4 +2125,3 @@ class _GlassJourneyCard extends StatelessWidget {
 //     );
 //   }
 // }
-
