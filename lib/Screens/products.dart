@@ -656,7 +656,8 @@ class _CartScreenSkuOnlyState extends State<_CartScreenSkuOnly> {
 
   int get _total => widget.cartSku.values.fold(0, (a, b) => a + b);
 
-  Future<void> _save() async {
+
+    Future<void> _save() async {
     // var api = Repository();
 
     //  try {
@@ -721,6 +722,72 @@ class _CartScreenSkuOnlyState extends State<_CartScreenSkuOnly> {
     }
   }
 
+/*
+  Future<void> _save() async {
+    var api = Repository();
+
+     try {
+      final res = await api.createBaSale(
+        skuId: '1',
+        skuName: 'Tea Sample5',
+        skuPrice: '500',
+        skuQty: '10',
+        brandName: 'Mezan',
+        baCode: '001',
+        createdBy: 'XYZ',
+      );
+
+      if (!context.mounted) return;
+
+      if (res.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('BA sale saved successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: ${res.statusCode}')),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+
+    // if (!mounted) return;
+    // setState(() => _saving = true);
+    // try {
+    //   final lines = <Map<String, dynamic>>[
+    //     for (final r in _rows)
+    //       {
+    //         'key': r.item.key,
+    //         'itemId': r.item.itemId,
+    //         'name': r.item.name,
+    //         'brand': r.item.brand,
+    //         'qty': r.qty,
+    //       },
+    //   ];
+
+    //   final rec = OrderRecord(
+    //     id: DateTime.now().microsecondsSinceEpoch.toString(),
+    //     createdAt: DateTime.now(),
+    //     lines: lines,
+    //     itemCount: _rows.length,
+    //     totalQty: _total,
+    //     title: _rows.isNotEmpty
+    //         ? '${_rows.first.item.name}${_rows.length > 1 ? ' +${_rows.length - 1} more' : ''}'
+    //         : null,
+    //   );
+
+    //   await OrdersStorage().addOrder(rec);
+    //   if (!mounted) return;
+    //   Navigator.pop(context, {'submitted': true});
+    // } finally {
+    //   if (mounted) setState(() => _saving = false);
+    // }
+  }
+*/
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;

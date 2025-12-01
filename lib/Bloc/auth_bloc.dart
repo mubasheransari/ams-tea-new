@@ -11,6 +11,8 @@ import 'package:new_amst_flutter/Model/loginModel.dart';
 import 'package:new_amst_flutter/Repository/repository.dart';
 import 'package:bloc/bloc.dart';
 
+
+
 var storage = GetStorage();
 
 final now = DateTime.now();
@@ -19,14 +21,22 @@ final currentTime = DateFormat("HH:mm:ss").format(now);
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final Repository repo;
+
   AuthBloc(this.repo) : super(const AuthState()) {
     on<LoginEvent>(_onLogin);
+
+    // 🔥 map load handlers
+    on<MapLoadStarted>(_onMapLoadStarted);
+    on<MapCreatedEvent>(_onMapCreated);
+    on<MapLoadReset>(_onMapLoadReset);
 
     final cached = LocalSession.readLogin();
     if (cached != null) {
       emit(state.copyWith(loginModel: cached));
     }
   }
+
+  /* --------------------------- LOGIN --------------------------- */
 
   Future<void> _onLogin(LoginEvent e, Emitter<AuthState> emit) async {
     emit(state.copyWith(loginStatus: LoginStatus.loading, error: null));
@@ -48,7 +58,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         attDate: attDate,
         appVersion: "2.0.2",
         add: "fyghfshfohfor",
-        deviceId:"0d6bb3238ca24544",
+        deviceId: "0d6bb3238ca24544", // you can change to deviceID
       );
 
       debugPrint("BODY ${res.body}");
@@ -90,7 +100,45 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     } catch (err) {
       await LocalSession.clearLogin();
-      emit(state.copyWith(loginStatus: LoginStatus.failure, error: '$err'));
+      emit(
+        state.copyWith(
+          loginStatus: LoginStatus.failure,
+          error: '$err',
+        ),
+      );
     }
+  }
+
+  /* --------------------------- MAP LOAD HANDLERS --------------------------- */
+
+  void _onMapLoadStarted(
+    MapLoadStarted event,
+    Emitter<AuthState> emit,
+  ) {
+    // reset map load state
+    emit(state.copyWith(mapLoadStatus: MapLoadStatus.initial));
+  }
+
+  Future<void> _onMapCreated(
+    MapCreatedEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    // GoogleMap onMapCreated called
+    emit(state.copyWith(mapLoadStatus: MapLoadStatus.creating));
+
+    // simulate tiles drawing -> treat this as "90% loaded"
+    await Future.delayed(const Duration(milliseconds: 800));
+    emit(state.copyWith(mapLoadStatus: MapLoadStatus.almostReady));
+
+    // fully ready
+    await Future.delayed(const Duration(milliseconds: 400));
+    emit(state.copyWith(mapLoadStatus: MapLoadStatus.ready));
+  }
+
+  void _onMapLoadReset(
+    MapLoadReset event,
+    Emitter<AuthState> emit,
+  ) {
+    emit(state.copyWith(mapLoadStatus: MapLoadStatus.initial));
   }
 }

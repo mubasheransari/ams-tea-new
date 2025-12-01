@@ -33,7 +33,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var box =GetStorage();
     final hasSession = LocalSession.readLogin() != null;
+    var supervisorLoggedIn =   box.read("supervisor_loggedIn");
+    print("SUPERVISOR $supervisorLoggedIn");
 
     return MaterialApp(
       title: 'AMS-T',
@@ -42,47 +45,17 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorSchemeSeed: Colors.deepPurple,
       ),
-      home: hasSession ? const AppShell() : const SplashScreen(),
+
+    //   home: !hasSession && supervisorLoggedIn != "1"
+    // ?  SplashScreen()
+    // : supervisorLoggedIn == "1"
+    //     ? JourneyPlanMapScreen()   
+    //     :const  AppShell(),
+
+    
+      home: SplashScreen(),
+
+      //home: hasSession  ? const AppShell() : const SplashScreen(),
     );
   }
 }
-
-// void main() async{
-//     await GetStorage.init();
-//   WidgetsFlutterBinding.ensureInitialized();
-
-//   final repo = Repository();
-//   final authBloc = AuthBloc(repo);
-//    // ..add(LoginEvent('mubashera38@gmail.com','123')); 
-
-//   runApp(MyApp(repo: repo, authBloc: authBloc));
-// }
-
-// class MyApp extends StatelessWidget {
-//   final Repository repo;
-//   final AuthBloc authBloc;
-//   const MyApp({super.key, required this.repo, required this.authBloc});
-
-//   @override
-//   Widget build(BuildContext context) {
-//       final hasSession = LocalSession.readLogin() != null;
-//     return MaterialApp(
-//       title: 'AMS-T',
-//       debugShowCheckedModeBanner: false,
-//       theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.deepPurple),
-
-
-//       builder: (context, child) {
-//         return RepositoryProvider.value(
-//           value: repo,
-//           child: BlocProvider<AuthBloc>.value(
-//             value: authBloc,
-//             child: child!,
-//           ),
-//         );
-//       },
-
-//       home: hasSession ? AppShell() : SplashScreen(),
-//     );
-//   }
-// }

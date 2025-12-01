@@ -236,7 +236,7 @@ Future<void> _submitLogin() async {
 
   // ✅ Hardcoded supervisor login
   if (email == "supervisor@gmail.com" && password == "123") {
-         box.write("supervisor_loggedIn",1);
+         box.write("supervisor_loggedIn","1");
   
     Navigator.push(
       context,
