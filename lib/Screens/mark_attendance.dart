@@ -3,32 +3,13 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
-import 'package:location/location.dart' as loc;
-import 'package:geocoding/geocoding.dart' as geo;
-import 'package:new_amst_flutter/Repository/repository.dart';
-
-
-// mark_attendance_view.dart
-
-import 'dart:async';
-import 'dart:io';
-import 'dart:ui' as ui;
-
-import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart' as loc;
-import 'package:geocoding/geocoding.dart' as geo;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:location/location.dart' as loc;
+import 'package:geocoding/geocoding.dart' as geo;
 
-import '../repository/repository.dart'; // <-- change this path as per your project
-
-// -------------- CONSTANTS & GRADIENTS --------------
 
 const _kPrimaryGrad = LinearGradient(
   colors: [Color(0xFF0ED2F7), Color(0xFF7F53FD)],

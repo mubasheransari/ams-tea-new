@@ -658,38 +658,38 @@ class _CartScreenSkuOnlyState extends State<_CartScreenSkuOnly> {
 
 
     Future<void> _save() async {
-    // var api = Repository();
+     var api = Repository();
 
-    //  try {
-    //   final res = await api.createBaSale(
-    //     skuId: '1',
-    //     skuName: 'Tea Sample5',
-    //     skuPrice: '500',
-    //     skuQty: '10',
-    //     brandName: 'Mezan',
-    //     baCode: '001',
-    //     createdBy: 'XYZ',
-    //   );
+     try {
+      final res = await api.createBaSale(
+        skuId: '1',
+        skuName: 'Tea Sample5',
+        skuPrice: '500',
+        skuQty: '10',
+        brandName: 'Mezan',
+        baCode: '001',
+        createdBy: 'XYZ',
+      );
 
-    //   if (!context.mounted) return;
+      if (!context.mounted) return;
 
-    //   if (res.statusCode == 200) {
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       const SnackBar(content: Text('BA sale saved successfully')),
-    //     );
-    //   } else {
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       SnackBar(content: Text('Failed: ${res.statusCode}')),
-    //     );
-    //   }
-    // } catch (e) {
-    //   if (!context.mounted) return;
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     SnackBar(content: Text('Error: $e')),
-    //   );
-    // }
+      if (res.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('BA sale saved successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: ${res.statusCode}')),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
 
-    if (!mounted) return;
+  /*  if (!mounted) return;
     setState(() => _saving = true);
     try {
       final lines = <Map<String, dynamic>>[
@@ -719,7 +719,7 @@ class _CartScreenSkuOnlyState extends State<_CartScreenSkuOnly> {
       Navigator.pop(context, {'submitted': true});
     } finally {
       if (mounted) setState(() => _saving = false);
-    }
+    }*/
   }
 
 /*

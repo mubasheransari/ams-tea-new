@@ -20,7 +20,7 @@ class Repository {
       "http://services.zankgroup.com/amslive/index.php?route=api/most/attendance";
 
       final String baSalesCreateUrl =
-    "http://192.168.1.72/ords/tea/ba_sales/create/";
+    "https://tapex.mezangrp.com/ords/tea/ba_sales/create/";
 
 
 Future<http.Response> createBaSale({

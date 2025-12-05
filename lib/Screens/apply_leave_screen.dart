@@ -559,65 +559,6 @@ class _DescriptionCard extends StatelessWidget {
 }
 
 
-// class _DescriptionCard extends StatelessWidget {
-//   const _DescriptionCard({
-//     required this.controller,
-//   });
-
-//   final TextEditingController controller;
-//   final String? Function(String?)? validator;
-//   final String hint;
-//   final int minLines;
-//   final int maxLines;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       // dynamic height for multiline
-//       decoration: _kCardDeco,
-//       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-//       child: Row(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           const Icon(
-//             Icons.description_outlined,
-//             size: 18,
-//             color: Color(0xFF1B1B1B),
-//           ),
-//           const SizedBox(width: 10),
-//           Expanded(
-//             child: TextFormField(
-//               controller: controller,
-//               validator: validator,
-//               keyboardType: TextInputType.multiline,
-//               textInputAction: TextInputAction.newline,
-//               minLines: minLines,
-//               maxLines: maxLines,
-//               style: const TextStyle(
-//                 fontFamily: 'ClashGrotesk',
-//                 color: Colors.black,
-//                 fontSize: 16,
-//                 fontWeight: FontWeight.w600,
-//                 height: 1.35,
-//               ),
-//               decoration: InputDecoration(
-//                 hintText: hint,
-//                 border: InputBorder.none,
-//                 isCollapsed: true,
-//                 hintStyle: const TextStyle(
-//                   fontFamily: 'ClashGrotesk',
-//                   color: Colors.black54,
-//                   fontSize: 16,
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
 class _DateCard extends StatelessWidget {
   const _DateCard({
     required this.label,

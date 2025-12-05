@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:new_amst_flutter/Screens/attendance_history_screen.dart';
 import 'package:new_amst_flutter/Screens/home_screen.dart';
 import 'package:new_amst_flutter/Screens/profile_screen.dart' show ProfilePage;
-import 'package:new_amst_flutter/Screens/report_history_screen.dart';
 import 'package:new_amst_flutter/Screens/tabbar_screen_history.dart';
 import '../Widgets/bottom_bar.dart';
 
@@ -94,74 +92,3 @@ class _TabNavigator extends StatelessWidget {
   }
 }
 
-
-// class AppShell extends StatefulWidget {
-//   const AppShell({super.key});
-
-//   @override
-//   State<AppShell> createState() => _AppShellState();
-// }
-
-// class _AppShellState extends State<AppShell> {
-//   BottomTab _tab = BottomTab.home;
-
-//   final _keys = {
-//     BottomTab.home: GlobalKey<NavigatorState>(),
-//     BottomTab.reports: GlobalKey<NavigatorState>(),
-//     BottomTab.profile: GlobalKey<NavigatorState>(),
-//   };
-
-//   Future<bool> _onWillPop() async {
-//     final nav = _keys[_tab]!.currentState!;
-//     if (nav.canPop()) {
-//       nav.pop();
-//       return false;
-//     }
-//     if (_tab != BottomTab.home) {
-//       setState(() => _tab = BottomTab.home);
-//       return false;
-//     }
-//     return true;
-//   }
-
-//   void _setTab(BottomTab t) => setState(() => _tab = t);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return WillPopScope(
-//       onWillPop: _onWillPop,
-//       child: Scaffold(
-//         backgroundColor: const Color(0xFFF7F8FA),
-//         body: IndexedStack(
-//           index: _tab.index,
-//           children: [
-//             _TabNavigator(key: _keys[BottomTab.home], initial: const InspectionHomePixelPerfect()),
-//             _TabNavigator(key: _keys[BottomTab.reports], initial: const ReportHistoryScreen()),
-//             _TabNavigator(key: _keys[BottomTab.profile], initial: const ProfilePage()),
-//           ],
-//         ),
-//         bottomNavigationBar: BottomBar(
-//           active: _tab,
-//           onChanged: _setTab,
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-// class _TabNavigator extends StatelessWidget {
-//   const _TabNavigator({super.key, required this.initial});
-//   final Widget initial;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Navigator(
-//       onGenerateRoute: (settings) {
-//         return MaterialPageRoute(
-//           builder: (_) => initial,
-//           settings: settings,
-//         );
-//       },
-//     );
-//   }
-// }

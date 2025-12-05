@@ -12,48 +12,9 @@ import 'package:new_amst_flutter/Widgets/custom_toast_widget.dart';
 import 'package:new_amst_flutter/Widgets/watermarked_widget.dart';
 import 'dart:ui' as ui;
 import 'package:new_amst_flutter/Bloc/auth_bloc.dart';
-
-import 'dart:convert';
 import 'dart:math';
 
     final box = GetStorage();
-
-// void showToast(BuildContext context, String message, {bool success = true}) {
-//   final mq = MediaQuery.of(context);
-//   final keyboard = mq.viewInsets.bottom;
-//   final availableH = mq.size.height - keyboard;
-//   final bottomOffset = (availableH / 2) - 28;
-//   final safeBottom = bottomOffset.clamp(16.0, availableH - 80.0);
-
-//   ScaffoldMessenger.of(context).hideCurrentSnackBar();
-//   ScaffoldMessenger.of(context).showSnackBar(
-//     SnackBar(
-//       behavior: SnackBarBehavior.floating,
-//       margin: EdgeInsets.fromLTRB(
-//         16,
-//         0,
-//         16,
-//         safeBottom,
-//       ),
-//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-//       elevation: 10,
-//       backgroundColor:
-//           success ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-//       content: Row(
-//         children: [
-//           Icon(
-//             success ? Icons.check_circle : Icons.error_outline,
-//             color: Colors.white,
-//           ),
-//           const SizedBox(width: 8),
-//           Expanded(
-//             child: Text(message, style: const TextStyle(color: Colors.white)),
-//           ),
-//         ],
-//       ),
-//     ),
-//   );
-// }
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
